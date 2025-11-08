@@ -1,2 +1,6 @@
-def main() -> None:
-    print("Hello from snip!")
+from importlib.metadata import version, PackageNotFoundError
+
+try:
+    __version__ = version("snip")
+except PackageNotFoundError:
+    __version__ = "0.0.0"

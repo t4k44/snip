@@ -15,6 +15,7 @@ import sqlite3
 import subprocess
 import sys
 from typing import List
+from . import __version__
 
 DB_PATH = os.path.expanduser("~/share/llogs.db")
 TABLE = "snippets"
@@ -59,8 +60,8 @@ def fzf_select(db_path: str):
     conn.close()
     lines = []
     for r in rows:
-        body_one = r["body"].replace("\n", "
-")  # keep visible but single-line
+        body_one = r["body"].replace("\n", """
+""")  # keep visible but single-line
         tag0 = (r["tags"][0] if r["tags"] else "plain")
         lines.append(f'{r["id"]}\t{r["trigger"]}\t{body_one}\t[{",".join(r["tags"])}]\t{tag0}')
 
@@ -88,7 +89,10 @@ def fzf_select(db_path: str):
     return row[0] if row else None
 
 def main():
-    p      = argparse.ArgumentParser()
+    p = argparse.ArgumentParser()
+    p.add_argument("--version", action="version", version=f"%(prog)s {__version__}",
+                        help="バージョン表示")
+
     sub    = p.add_subparsers(dest="cmd")
     a_list = sub.add_parser("list")
     a_add  = sub.add_parser("add")
