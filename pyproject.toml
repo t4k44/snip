@@ -7,10 +7,14 @@ authors = [
     { name = "Takashi Kikuchi", email = "tkskkc@gmail.com" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "argparse>=1.4.0",
+    "sqlite-utils>=3.38",
+    "typing>=3.10.0.0",
+]
 
 [project.scripts]
-snip = "snip:main"
+snip = "snip.main:main"
 
 [build-system]
 requires = ["uv_build>=0.9.8,<0.10.0"]
