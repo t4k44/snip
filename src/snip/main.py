@@ -16,6 +16,9 @@ from typing import List
 from . import __version__
 from .snip_list import fzf_select
 import snip.constants as C
+from sqlite_utils import Database
+from pathlib import Path
+
 
 def ensure_table(conn: sqlite3.Connection):
     conn.execute(f"""CREATE TABLE IF NOT EXISTS {C.TABLE} (
@@ -30,17 +33,23 @@ def ensure_table(conn: sqlite3.Connection):
     )""")
     conn.commit()
 
-def insert_snip(conn: sqlite3.Connection, trigger: str, body: str, memo: str, abbr: str, tags: List[str]):
-    tags_json = json.dumps(tags)
-    conn.execute(f"INSERT INTO {C.TABLE} (trigger, body, memo, abbr, tags, mime, source) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                 (trigger, body, memo, abbr, tags_json, "text/plain", "python"))
-    conn.commit()
+
+def insert_snip(db: Database, trigger: str, body: str, memo: str, abbr: str, tags: List[str]):
+    db[C.TABLE].insert({
+        "trigger":  trigger,
+        "body":     body,
+        "memo":     memo,
+        "abbr":     abbr,
+        "tags":     json.dumps(tags),
+        "mode":     None,
+    }, pk="id", columns={"abbr": int})
 
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--version", action="version", version=f"%(prog)s {__version__}",
-                        help="バージョン表示")
+    p.add_argument("--version", action="version",
+                   version=f"%(prog)s {__version__}",
+                   help="バージョン表示")
 
     sub    = p.add_subparsers(dest="cmd")
     a_list = sub.add_parser("list")
@@ -53,9 +62,8 @@ def main():
     a_add.add_argument("-b", "--body",    default=None)
     args = p.parse_args()
 
-    os.makedirs(os.path.dirname(os.path.expanduser(C.DB_PATH)), exist_ok=True)
-    conn = sqlite3.connect(os.path.expanduser(C.DB_PATH))
-    ensure_table(conn)
+    prj_path = Path.cwd()
+    db = Database(str(prj_path / C.DBNAME))
 
     if args.cmd == "add":
         if not sys.stdin.isatty() and args.body is None:
@@ -64,13 +72,14 @@ def main():
             body = args.body or ""
         trigger = args.trigger or (None if not body else body.splitlines()[0][:40])
         tags = [t for t in args.tags.split(",") if t]
-        insert_snip(conn, trigger or "", body, args.memo, args.abbr, tags)
+        insert_snip(db, trigger or "", body, args.memo, args.abbr, tags)
         print("ok")
     else:
-        body = fzf_select(DB_PATH)
+        body = fzf_select(db)
         if body:
             # print body to stdout for shell-capture; caller can insert into commandline as needed
             sys.stdout.write(body)
+
 
 if __name__ == "__main__":
     main()
