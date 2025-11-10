@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import sqlite3
 import subprocess
 import snip.constants as C
 from sqlite_utils import Database
@@ -16,8 +15,10 @@ def fzf_select(db: Database):
 
     prj_path = Path.cwd()
     fzf = subprocess.Popen(
-        ["fzf", "--with-nth=2,3,4", "--delimiter=\t", "--no-unicode",
-         "--preview", f"sqlite3 {str(prj_path / C.DBNAME)} \"SELECT body || char(10) || '--------' || char(10) || memo || char(10) || '--------' || char(10) || tags FROM {TABLE} WHERE id = {{1}}\" | batcat -pl {{5}} --color=always",
+        ["fzf", "--with-nth=2,3,4", "--delimiter=\t", "--no-unicode", "--preview",
+         f"sqlite3 {str(prj_path / C.DBNAME)} \"SELECT body || char(10) || '--------' || char(10) || "
+                f"memo || char(10) || '--------' || char(10) || tags FROM {C.TABLE} WHERE id = {{1}}\" | "
+                f"batcat -pl {{5}} --color=always",
          "--preview-window=right,50%,wrap",
          "--bind", "enter:accept"],
         stdin=subprocess.PIPE,

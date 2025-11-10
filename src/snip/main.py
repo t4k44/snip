@@ -9,15 +9,13 @@ Usage:
 """
 import argparse
 import json
-import os
-import sqlite3
-import sys
-from typing import List
-from . import __version__
-from .snip_list import fzf_select
 import snip.constants as C
-from sqlite_utils import Database
-from pathlib import Path
+import sys
+from . import __version__
+from pathlib        import Path
+from snip.snip_list import fzf_select
+from sqlite_utils   import Database
+from typing         import List
 
 
 def insert_snip(db: Database, trigger: str, body: str, memo: str, abbr: str, tags: List[str]):
