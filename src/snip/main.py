@@ -20,20 +20,6 @@ from sqlite_utils import Database
 from pathlib import Path
 
 
-def ensure_table(conn: sqlite3.Connection):
-    conn.execute(f"""CREATE TABLE IF NOT EXISTS {C.TABLE} (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        trigger TEXT,
-        body TEXT,
-        memo TEXT,
-        abbr TEXT,
-        tags TEXT,
-        mime TEXT,
-        source TEXT
-    )""")
-    conn.commit()
-
-
 def insert_snip(db: Database, trigger: str, body: str, memo: str, abbr: str, tags: List[str]):
     db[C.TABLE].insert({
         "trigger":  trigger,
@@ -57,7 +43,7 @@ def main():
 
     a_add.add_argument("-T", "--trigger", default=None)
     a_add.add_argument("-t", "--tags",    default="python")
-    a_add.add_argument("-a", "--abbr",    default="0")
+    a_add.add_argument("-a", "--abbr",    default=0)
     a_add.add_argument("-m", "--memo",    default="")
     a_add.add_argument("-b", "--body",    default=None)
     args = p.parse_args()
