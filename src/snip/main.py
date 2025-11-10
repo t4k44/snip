@@ -9,13 +9,14 @@ Usage:
 """
 import argparse
 import json
+import os
+import subprocess
 import snip.constants as C
 import sys
 from . import __version__
 from pathlib        import Path
 from snip.snip_list import fzf_select
 from sqlite_utils   import Database
-from typing         import List
 
 
 def insert_snip(db: Database, args, body: str):
@@ -23,12 +24,12 @@ def insert_snip(db: Database, args, body: str):
     tags = [t for t in args.tags.split(",") if t]
 
     db[C.TABLE].insert({
-        "trigger":  trigger,
-        "body":     body,
-        "memo":     memo,
-        "abbr":     abbr,
-        "tags":     json.dumps(tags),
-        "mode":     None,
+        "trigger": trigger,
+        "body":    body,
+        "memo":    args.memo,
+        "abbr":    args.abbr,
+        "tags":    json.dumps(tags),
+        "mode":    None,
     }, pk="id", columns={"abbr": int})
 
 
@@ -52,18 +53,16 @@ def main():
     prj_path = Path.cwd()
     db = Database(str(prj_path / C.DBNAME))
 
-    if args.cmd == "add":
-        body = sys.stdin.read() if not sys.stdin.isatty() is None else args.body or ""
-
-        insert_snip(db, args, body)
-        print("ok")
-    elif args.cmd == "list":
-        body = fzf_select(db)
-        if body:
-            # print body to stdout for shell-capture; caller can insert into commandline as needed
-            sys.stdout.write(body)
-    else:
-        pass
+    match args.cmd:
+        case "add":
+            body = sys.stdin.read() if not sys.stdin.isatty() else (args.body or "")
+            insert_snip(db, args, body)
+            print("ok")
+        case "list":
+            # `commandline -i (snip list)` で呼び出し
+            print(fzf_select(db))
+        case _:
+            pass
 
 
 if __name__ == "__main__":

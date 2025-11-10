@@ -35,5 +35,5 @@ def fzf_select(db: Database):
     id_selected = chosen.split("\t", 1)[0]
 
     # fetch full body
-    row = db[C.TABLE].get(id_selected)["body"]
+    row = db[C.TABLE].get(id_selected)
     return row["body"] if row else None
