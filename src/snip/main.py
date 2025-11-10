@@ -18,7 +18,10 @@ from sqlite_utils   import Database
 from typing         import List
 
 
-def insert_snip(db: Database, trigger: str, body: str, memo: str, abbr: str, tags: List[str]):
+def insert_snip(db: Database, args, body: str):
+    trigger = args.trigger or (None if not body else body.splitlines()[0][:40])
+    tags = [t for t in args.tags.split(",") if t]
+
     db[C.TABLE].insert({
         "trigger":  trigger,
         "body":     body,
@@ -50,19 +53,17 @@ def main():
     db = Database(str(prj_path / C.DBNAME))
 
     if args.cmd == "add":
-        if not sys.stdin.isatty() and args.body is None:
-            body = sys.stdin.read()
-        else:
-            body = args.body or ""
-        trigger = args.trigger or (None if not body else body.splitlines()[0][:40])
-        tags = [t for t in args.tags.split(",") if t]
-        insert_snip(db, trigger or "", body, args.memo, args.abbr, tags)
+        body = sys.stdin.read() if not sys.stdin.isatty() is None else args.body or ""
+
+        insert_snip(db, args, body)
         print("ok")
-    else:
+    elif args.cmd == "list":
         body = fzf_select(db)
         if body:
             # print body to stdout for shell-capture; caller can insert into commandline as needed
             sys.stdout.write(body)
+    else:
+        pass
 
 
 if __name__ == "__main__":
