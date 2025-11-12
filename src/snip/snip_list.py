@@ -22,7 +22,7 @@ def rofi_name(db: Database):
     """
 
     rows = db.query(query, [tag])
-    rows = [f"{int(row['id']):03d} : {row['trigger']}\t{row['body']}\t{row['memo']}\t{row['tags']}" for row in rows]
+    rows = [f"{int(row['id']):3d} : {row['trigger']}\t{row['body']}\t{row['memo']}\t{row['tags']}" for row in rows]
 
     try:
         choice = subprocess.run(["rofi", "-dmenu", "-p", "'Snippets'"], input="\n".join(rows),
