@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import json
 import subprocess
 import snip.constants as C
 from sqlite_utils import Database
@@ -9,9 +10,11 @@ from pathlib import Path
 def fzf_select(db: Database):
     lines = []
     for row in db[C.TABLE].rows:
-        body_one = row["body"]
-        tag0 = (row["tags"][0] if row["tags"] else "plain")
-        lines.append(f'{row["id"]}\t{row["trigger"]}\t{body_one}\t[{",".join(row["tags"])}]\t{tag0}')
+        body = "⏎ ".join(row["body"].splitlines())
+        tags = json.loads(row["tags"])
+        lngm = (tags[0] if tags and tags[0] != "name" else "txt")
+        lngm = "vim" if lngm == "nvim" else lngm
+        lines.append(f'{row["id"]}\t{row["trigger"]}\t{body}\t[tags: {",".join(tags)}]\t{lngm}')
 
     prj_path = Path.cwd()
     fzf = subprocess.Popen(
@@ -28,7 +31,7 @@ def fzf_select(db: Database):
     stdin_data = "\n".join(lines)
     stdout, _ = fzf.communicate(stdin_data)
     if not stdout:
-        return None
+        return ""
 
     # fzf returns the chosen line; id is first column
     chosen = stdout.strip().split("\n")[-1]
@@ -36,4 +39,4 @@ def fzf_select(db: Database):
 
     # fetch full body
     row = db[C.TABLE].get(id_selected)
-    return row["body"] if row else None
+    return row["body"] if row else ""

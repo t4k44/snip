@@ -9,8 +9,6 @@ Usage:
 """
 import argparse
 import json
-import os
-import subprocess
 import snip.constants as C
 import sys
 from . import __version__
