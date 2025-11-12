@@ -56,7 +56,7 @@ def main():
     a_list = sub.add_parser("list")
     a_list.add_argument("-f", "--fzf",  action="store_true", help="commandline fzf selector")
     a_list.add_argument("-n", "--nvim", action="store_true", help="output luasnippets list")
-    a_list.add_argument("-r", "--rofi", action="store_true", help="")
+    a_list.add_argument("-r", "--rofi", action="store_true", help="rofi内部使用用")
 
     a_add  = sub.add_parser("add")
     a_add.add_argument("-i", "--id",      default=None,   help="update id")
