@@ -21,7 +21,8 @@ def insert_snip(db: Database, args, body: str):
     trigger = args.trigger or (None if not body else body.splitlines()[0][:40])
     tags = [t for t in args.tags.split(",") if t]
 
-    db[C.TABLE].insert({
+    db[C.TABLE].upsert({
+        "id":      id,
         "trigger": trigger,
         "body":    body,
         "memo":    args.memo,
@@ -39,11 +40,12 @@ def main():
 
     sub    = p.add_subparsers(dest="cmd")
     a_list = sub.add_parser("list")
-    a_list.add_argument("-f", "--fzf",  action="store_true", help="")
-    a_list.add_argument("-n", "--nvim", action="store_true", help="")
+    a_list.add_argument("-f", "--fzf",  action="store_true", help="commandline fzf selector")
+    a_list.add_argument("-n", "--nvim", action="store_true", help="output luasnippets list")
     a_list.add_argument("-r", "--rofi", action="store_true", help="")
 
     a_add  = sub.add_parser("add")
+    a_add.add_argument("-i", "--id",      default=None,   help="update id")
     a_add.add_argument("-T", "--trigger", default="memo", help="snippet trigger string")
     a_add.add_argument("-t", "--tags",    default="fish", help="tags split ','")
     a_add.add_argument("-b", "--body",    default=None,   help="expand strings")
