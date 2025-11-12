@@ -1,10 +1,42 @@
 #!/usr/bin/env python3
 
 import json
+import time
 import subprocess
+import logging
 import snip.constants as C
 from sqlite_utils import Database
 from pathlib import Path
+
+
+def rofi_name(db: Database):
+    copyq  = "/opt/copyq-sqlite/bin/copyq"
+    length = 40
+    tag    = "name"
+    query = f"""
+        SELECT id, trigger, replace(substr(body, 0, {length}), char(10), '⏎ ') AS body,
+               tags, replace(substr(memo, 0, {length}), char(10), '⏎ ') AS memo
+        FROM snippets
+        WHERE
+              EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = ?)
+    """
+
+    rows = db.query(query, [tag])
+    rows = [f"{row['id']} : {row['trigger']}\t{row['body']}\t{row['memo']}\t{row['tags']}" for row in rows]
+
+    try:
+        choice = subprocess.run(["rofi", "-dmenu", "-p", "'Snippets'"], input="\n".join(rows),
+                                stdout=subprocess.PIPE, text=True)
+        if choice.returncode != 0:
+            return
+
+        body = db[C.TABLE].get(choice.stdout.split()[0])["body"]
+        subprocess.run([copyq, "copy", body])
+        # time.sleep(1)
+        subprocess.run([copyq, "paste"])
+    except subprocess.CalledProcessError as e:
+        logging.error("stdout: %s", e.stdout)
+        logging.error("stderr: %s", e.stderr)
 
 
 def fzf_select(db: Database):

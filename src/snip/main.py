@@ -9,11 +9,12 @@ Usage:
 """
 import argparse
 import json
+import os
 import snip.constants as C
 import sys
 from . import __version__
 from pathlib        import Path
-from snip.snip_list import fzf_select
+from snip.snip_list import fzf_select, rofi_name
 from sqlite_utils   import Database
 
 
@@ -55,6 +56,7 @@ def main():
     sub    = p.add_subparsers(dest="cmd")
     a_list = sub.add_parser("list")
     a_list.add_argument("-f", "--fzf",  action="store_true", help="commandline fzf selector")
+    a_list.add_argument("-N", "--name", action="store_true", help="rofi app and so name")
     a_list.add_argument("-n", "--nvim", action="store_true", help="output luasnippets list")
     a_list.add_argument("-r", "--rofi", action="store_true", help="rofi内部使用用")
 
@@ -69,8 +71,8 @@ def main():
 
     args = p.parse_args()
 
-    prj_path = Path.cwd()
-    db = Database(str(prj_path / C.DBNAME))
+    db_file = os.path.join(os.path.expanduser("~"), ".config", "mine", C.DBNAME)
+    db = Database(db_file)
 
     match args.cmd:
         case "add":
@@ -79,8 +81,10 @@ def main():
             print(f"DONE {ret['id']} : {ret['trigger']}")
         case "list":
             if args.fzf:
-                # `commandline -i (snip list)` で呼び出し
+                # `commandline -i (snip list -f)` で呼び出し
                 print(fzf_select(db))
+            elif args.name:
+                rofi_name(db)
             elif args.nvim:
                 pass
             elif args.rofi:
