@@ -21,15 +21,29 @@ def insert_snip(db: Database, args, body: str):
     trigger = args.trigger or (None if not body else body.splitlines()[0][:40])
     tags = [t for t in args.tags.split(",") if t]
 
-    db[C.TABLE].upsert({
-        "id":      id,
-        "trigger": trigger,
-        "body":    body,
-        "memo":    args.memo,
-        "abbr":    args.abbr,
-        "tags":    json.dumps(tags),
-        "mode":    args.mode,
-    }, pk="id", columns={"abbr": int})
+    with db.conn:
+        if args.id:
+            db[C.TABLE].upsert({
+                "id":      args.id,
+                "trigger": trigger,
+                "body":    body,
+                "memo":    args.memo,
+                "abbr":    args.abbr,
+                "tags":    json.dumps(tags),
+                "mode":    args.mode,
+            }, pk="id")
+        else:
+            db[C.TABLE].insert({
+                "trigger": trigger,
+                "body":    body,
+                "memo":    args.memo,
+                "abbr":    args.abbr,
+                "tags":    json.dumps(tags),
+                "mode":    args.mode,
+            }, pk="id", columns={"abbr": int})
+        ret = db[C.TABLE].get(db.conn.execute("SELECT last_insert_rowid()").fetchone()[0])
+
+    return ret
 
 
 def main():
@@ -61,8 +75,8 @@ def main():
     match args.cmd:
         case "add":
             body = sys.stdin.read() if not sys.stdin.isatty() else (args.body or "")
-            insert_snip(db, args, body)
-            print("ok")
+            ret  = insert_snip(db, args, body)
+            print(f"DONE {ret['id']} : {ret['trigger']}")
         case "list":
             if args.fzf:
                 # `commandline -i (snip list)` で呼び出し
