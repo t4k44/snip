@@ -23,7 +23,7 @@ def fzf_select(db: Database):
                 f"memo || char(10) || '--------' || char(10) || tags FROM {C.TABLE} WHERE id = {{1}}\" | "
                 f"batcat -pl {{5}} --color=always",
          "--preview-window=right,50%,wrap",
-         "--bind", "enter:accept"],
+         "--bind", "enter:accept"],         # TODO json edit
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         text=True
