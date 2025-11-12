@@ -27,7 +27,7 @@ def insert_snip(db: Database, args, body: str):
         "memo":    args.memo,
         "abbr":    args.abbr,
         "tags":    json.dumps(tags),
-        "mode":    None,
+        "mode":    args.mode,
     }, pk="id", columns={"abbr": int})
 
 
@@ -41,11 +41,13 @@ def main():
     a_list = sub.add_parser("list")
     a_add  = sub.add_parser("add")
 
-    a_add.add_argument("-T", "--trigger", default=None)
-    a_add.add_argument("-t", "--tags",    default="python")
-    a_add.add_argument("-a", "--abbr",    default=0)
-    a_add.add_argument("-m", "--memo",    default="")
-    a_add.add_argument("-b", "--body",    default=None)
+    a_add.add_argument("-T", "--trigger", default="memo", help="snippet trigger string")
+    a_add.add_argument("-t", "--tags",    default="fish", help="tags split ','")
+    a_add.add_argument("-b", "--body",    default=None,   help="expand strings")
+    a_add.add_argument("-m", "--memo",    default="",     help="description")
+    a_add.add_argument("-a", "--abbr",    default=0,      help="fish abbr  1:ON / 2:Position / 4:SetCursor")
+    a_add.add_argument("-M", "--mode",    default=None,   help="nvim mode  t:ON / fmta:TabStop / raw:raw")
+
     args = p.parse_args()
 
     prj_path = Path.cwd()
