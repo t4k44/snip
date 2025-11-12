@@ -39,8 +39,11 @@ def main():
 
     sub    = p.add_subparsers(dest="cmd")
     a_list = sub.add_parser("list")
-    a_add  = sub.add_parser("add")
+    a_list.add_argument("-f", "--fzf",  action="store_true", help="")
+    a_list.add_argument("-n", "--nvim", action="store_true", help="")
+    a_list.add_argument("-r", "--rofi", action="store_true", help="")
 
+    a_add  = sub.add_parser("add")
     a_add.add_argument("-T", "--trigger", default="memo", help="snippet trigger string")
     a_add.add_argument("-t", "--tags",    default="fish", help="tags split ','")
     a_add.add_argument("-b", "--body",    default=None,   help="expand strings")
@@ -59,8 +62,15 @@ def main():
             insert_snip(db, args, body)
             print("ok")
         case "list":
-            # `commandline -i (snip list)` で呼び出し
-            print(fzf_select(db))
+            if args.fzf:
+                # `commandline -i (snip list)` で呼び出し
+                print(fzf_select(db))
+            elif args.nvim:
+                pass
+            elif args.rofi:
+                pass
+            else:
+                pass
         case _:
             pass
 
