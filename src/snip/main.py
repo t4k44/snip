@@ -57,6 +57,7 @@ def main():
     a_list = sub.add_parser("list")
     a_list.add_argument("-f", "--fzf",  action="store_true", help="commandline fzf selector")
     a_list.add_argument("-N", "--name", action="store_true", help="rofi app and so name")
+    a_list.add_argument("-s", "--fish", action="store_true", help="output fish abbr")
     a_list.add_argument("-n", "--nvim", action="store_true", help="output luasnippets list")
     a_list.add_argument("-r", "--rofi", action="store_true", help="rofi内部使用用")
 
@@ -71,8 +72,10 @@ def main():
 
     args = p.parse_args()
 
-    db_file = os.path.join(os.path.expanduser("~"), ".config", "mine", C.DBNAME)
-    db = Database(db_file)
+    db_path = Path.home() / ".config" / "mine"
+    db_path.mkdir(parents=True, exist_ok=True)
+    db_file = db_path / C.DBNAME
+    db = Database(str(db_file))
 
     match args.cmd:
         case "add":
@@ -85,6 +88,8 @@ def main():
                 print(fzf_select(db))
             elif args.name:
                 rofi_name(db)
+            elif args.fish:
+                pass
             elif args.nvim:
                 pass
             elif args.rofi:

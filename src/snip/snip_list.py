@@ -22,7 +22,7 @@ def rofi_name(db: Database):
     """
 
     rows = db.query(query, [tag])
-    rows = [f"{row['id']} : {row['trigger']}\t{row['body']}\t{row['memo']}\t{row['tags']}" for row in rows]
+    rows = [f"{int(row['id']):03d} : {row['trigger']}\t{row['body']}\t{row['memo']}\t{row['tags']}" for row in rows]
 
     try:
         choice = subprocess.run(["rofi", "-dmenu", "-p", "'Snippets'"], input="\n".join(rows),
@@ -32,7 +32,6 @@ def rofi_name(db: Database):
 
         body = db[C.TABLE].get(choice.stdout.split()[0])["body"]
         subprocess.run([copyq, "copy", body])
-        # time.sleep(1)
         subprocess.run([copyq, "paste"])
     except subprocess.CalledProcessError as e:
         logging.error("stdout: %s", e.stdout)
