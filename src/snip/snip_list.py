@@ -55,11 +55,11 @@ def fzf_select(db: Database):
                 f"batcat -pl {{5}} --color=always",
          "--preview-window=right,50%,wrap",
          "--bind", "enter:accept",
-         "--bind", f"""ctrl-e:execute(sqlite-utils rows {str(C.DB_FILE)} {C.TABLE} --where "id={{1}}"
-                --nl --json-cols | jq . > /tmp/snp_edit.json && nvim /tmp/snp_edit.json &&
-                sqlite-utils upsert $DB snippets /tmp/snp_edit.json --pk id)"""
-         "--bind", f"""ctrl-d:execute(sqlite-utils query {str(C.DB_FILE)}
-                "DELETE FROM {C.TABLE} WHERE id={{1}}")"""
+         "--bind", f"ctrl-e:execute(sqlite-utils rows {str(C.DB_FILE)} {C.TABLE} --where \"id={{1}}\" "
+                f"--nl --json-cols | jq . > /tmp/snp_edit.json && nvim /tmp/snp_edit.json && "
+                f"sqlite-utils upsert {str(C.DB_FILE)} snippets /tmp/snp_edit.json --pk id)",
+         "--bind", f"ctrl-d:execute(sqlite-utils query {str(C.DB_FILE)} "
+                f"\"DELETE FROM {C.TABLE} WHERE id={{1}}\")"
          ],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
