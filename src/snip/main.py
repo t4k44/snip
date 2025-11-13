@@ -72,10 +72,8 @@ def main():
 
     args = p.parse_args()
 
-    db_path = Path.home() / ".config" / "mine"
-    db_path.mkdir(parents=True, exist_ok=True)
-    db_file = db_path / C.DBNAME
-    db = Database(str(db_file))
+    C.DB_PATH.mkdir(parents=True, exist_ok=True)
+    db = Database(str(C.DB_FILE))
 
     match args.cmd:
         case "add":

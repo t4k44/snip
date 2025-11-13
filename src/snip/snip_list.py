@@ -47,15 +47,20 @@ def fzf_select(db: Database):
         lngm = "vim" if lngm == "nvim" else lngm
         lines.append(f'{row["id"]}\t{row["trigger"]}\t{body}\t[tags: {",".join(tags)}]\t{lngm}')
 
-    prj_path = Path.cwd()
     fzf = subprocess.Popen(
         ["fzf", "--with-nth=2,3,4", "--delimiter=\t", "--no-unicode", "--preview",
-         f"sqlite3 {str(prj_path / C.DBNAME)} \"SELECT body || char(10) || '--------' || char(10) || "
+         f"sqlite3 {str(C.DB_FILE)} \"SELECT body || char(10) || '--------' || char(10) || "
          f"memo || char(10) || '--------' || char(10) || id || ':' || "
          f"tags FROM {C.TABLE} WHERE id = {{1}}\" | "
                 f"batcat -pl {{5}} --color=always",
          "--preview-window=right,50%,wrap",
-         "--bind", "enter:accept"],         # TODO json edit
+         "--bind", "enter:accept",
+         "--bind", f"""ctrl-e:execute(sqlite-utils rows {str(C.DB_FILE)} {C.TABLE} --where "id={{1}}"
+                --nl --json-cols | jq . > /tmp/snp_edit.json && nvim /tmp/snp_edit.json &&
+                sqlite-utils upsert $DB snippets /tmp/snp_edit.json --pk id)"""
+         "--bind", f"""ctrl-d:execute(sqlite-utils query {str(C.DB_FILE)}
+                "DELETE FROM {C.TABLE} WHERE id={{1}}")"""
+         ],
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         text=True
