@@ -28,15 +28,16 @@ def main():
     a_list.add_argument("-s", "--fish", action="store_true", help="output fish abbr")
     a_list.add_argument("-n", "--nvim", action="store_true", help="output luasnippets list")
     a_list.add_argument("-r", "--rofi", action="store_true", help="rofi内部使用用")
+    a_list.add_argument("-t", "--tag",  default="name",      help="narrow down from tag")
 
     a_add  = sub.add_parser("add")
     a_add.add_argument("-i", "--id",      default=None,   help="update id")
-    a_add.add_argument("-T", "--trigger", default="memo", help="snippet trigger string")
     a_add.add_argument("-t", "--tags",    default="fish", help="tags split ','")
-    a_add.add_argument("-b", "--body",    default=None,   help="expand strings")
     a_add.add_argument("-m", "--memo",    default="",     help="description")
     a_add.add_argument("-a", "--abbr",    default=0,      help="fish abbr  1:ON / 2:Position / 4:SetCursor")
     a_add.add_argument("-M", "--mode",    default=None,   help="nvim mode  t:ON / fmta:TabStop / raw:raw")
+    a_add.add_argument("trigger", nargs='?', help="snippet trigger string")
+    a_add.add_argument("body",    nargs='*', help="expand strings")
 
     args = p.parse_args()
 
@@ -45,7 +46,7 @@ def main():
 
     match args.cmd:
         case "add":
-            body = sys.stdin.read() if not sys.stdin.isatty() else (args.body or "")
+            body = sys.stdin.read() if not sys.stdin.isatty() else (" ".join(args.body) or "")
             ret  = insert_snip(db, args, body)
             print(f"DONE {ret['id']} : {ret['trigger']}")
         case "list":
@@ -53,7 +54,7 @@ def main():
                 # `commandline -i (snip list -f)` で呼び出し
                 print(fzf_select(db))
             elif args.name:
-                rofi_name(db)
+                rofi_name(db, args)
             elif args.fish:
                 pass
             elif args.nvim:
