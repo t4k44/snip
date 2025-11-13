@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
 
 import json
-import time
 import subprocess
 import logging
 import snip.constants as C
 from sqlite_utils import Database
-from pathlib import Path
 
 
 def rofi_name(db: Database):

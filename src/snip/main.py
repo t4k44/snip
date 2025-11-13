@@ -9,11 +9,9 @@ Usage:
 """
 import argparse
 import json
-import os
 import snip.constants as C
 import sys
 from . import __version__
-from pathlib        import Path
 from snip.snip_list import fzf_select, rofi_name
 from sqlite_utils   import Database
 
