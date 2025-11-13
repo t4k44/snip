@@ -40,7 +40,7 @@ def rofi_name(db: Database):
 
 def fzf_select(db: Database):
     lines = []
-    for row in db[C.TABLE].rows:
+    for row in db[C.TABLE].rows_where(order_by="id desc"):
         body = "⏎ ".join(row["body"].splitlines())
         tags = json.loads(row["tags"])
         lngm = (tags[0] if tags and tags[0] != "name" else "txt")
