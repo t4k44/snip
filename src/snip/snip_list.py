@@ -7,17 +7,16 @@ import snip.constants as C
 from sqlite_utils import Database
 
 
-def rofi_name(db: Database):
+def rofi_name(db: Database, args):
     copyq  = "/opt/copyq-sqlite/bin/copyq"
     length = 40
-    tag    = "name"
-    query = f"""
+    tag    = args.tag
+    query  = f"""
         SELECT id, trigger, replace(substr(body, 0, {length}), char(10), '⏎ ') AS body,
                tags, replace(substr(memo, 0, {length}), char(10), '⏎ ') AS memo
         FROM snippets
-        WHERE
-              EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = ?)
-    """
+        WHERE EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = ?)
+        """
 
     rows = db.query(query, [tag])
     rows = [f"{int(row['id']):3d} : {row['trigger']}\t{row['body']}\t{row['memo']}\t{row['tags']}" for row in rows]
@@ -38,7 +37,7 @@ def rofi_name(db: Database):
 
 def fzf_select(db: Database):
     lines = []
-    for row in db[C.TABLE].rows_where(order_by="id desc"):
+    for row in db[C.TABLE].rows_where(order_by="id DESC"):
         body = "⏎ ".join(row["body"].splitlines())
         tags = json.loads(row["tags"])
         lngm = (tags[0] if tags and tags[0] != "name" else "txt")
