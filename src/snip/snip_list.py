@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import json
+import re
 import subprocess
 import logging
 import snip.constants as C
@@ -28,6 +29,7 @@ def rofi_name(db: Database, args):
             return
 
         body = db[C.TABLE].get(choice.stdout.split()[0])["body"]
+        body = __body_clean_ip(body)
         subprocess.run([copyq, "copy", body])
         subprocess.run([copyq, "paste"])
     except subprocess.CalledProcessError as e:
@@ -35,10 +37,21 @@ def rofi_name(db: Database, args):
         logging.error("stderr: %s", e.stderr)
 
 
+def __body_clean_ip(body: str):
+    """
+    bodyのカーソル位置指定用記号を除去する
+    """
+    body = re.sub('<[0-9]>', '', body)
+    body = body.replace('%', '')
+
+    return body
+
+
 def fzf_select(db: Database):
     lines = []
     for row in db[C.TABLE].rows_where(order_by="id DESC"):
         body = "⏎ ".join(row["body"].splitlines())
+        body = __body_clean_ip(body)
         tags = json.loads(row["tags"])
         lngm = (tags[0] if tags and tags[0] != "name" else "txt")
         lngm = "vim" if lngm == "nvim" else lngm
@@ -69,4 +82,7 @@ def fzf_select(db: Database):
 
     # fetch full body
     row = db[C.TABLE].get(id_selected)
-    return row["body"] if row else ""
+    body = row["body"] if row else ""
+    body = __body_clean_ip(body)
+
+    return body
