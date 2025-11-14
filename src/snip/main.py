@@ -8,12 +8,13 @@ Usage:
   cat file | snip.py add  # read body from stdin
 """
 import argparse
-from snip import fish_abbr
 import snip.constants as C
 import sys
 from . import __version__
 from snip.snip_list import fzf_select, rofi_name
 from snip.snip_add  import insert_snip
+from snip import fish_abbr
+from snip import nvim
 from sqlite_utils   import Database
 
 
@@ -59,7 +60,7 @@ def main():
             elif args.fish:
                 fish_abbr.output(db)
             elif args.nvim:
-                pass
+                nvim.output(db)
             elif args.rofi:
                 pass
             else:
