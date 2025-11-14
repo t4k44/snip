@@ -8,6 +8,7 @@ Usage:
   cat file | snip.py add  # read body from stdin
 """
 import argparse
+from snip import fish_abbr
 import snip.constants as C
 import sys
 from . import __version__
@@ -56,7 +57,7 @@ def main():
             elif args.name:
                 rofi_name(db, args)
             elif args.fish:
-                pass
+                fish_abbr.output(db)
             elif args.nvim:
                 pass
             elif args.rofi:
