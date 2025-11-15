@@ -1,5 +1,6 @@
 import re
 import snip.constants as C
+from pathlib import Path
 from enum import IntFlag
 from sqlite_utils import Database
 
@@ -19,28 +20,31 @@ def init(db):
 
 
 def output(db):
-    snip = []
     for t in db[C.TAG_TABLE].rows:
         tag = t["name"]
-        rows = db[C.TABLE].rows_where("EXISTS (SELECT 1 FROM json_each(snippets.tags) "
-                                      "WHERE value = ?)", [tag])
+        rows = db[C.TABLE].rows_where(
+            "EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = ?)"
+            "AND mode IS NOT NULL", [tag])
+
+        snip = []
         for row in rows:
             match row["mode"]:
                 case "fmta":
                     body  = row["body"].replace("%", "")
                     maxn  = [int(m) for m in re.findall(r"<(\d+)>", body)]
                     nodes = ", ".join([f"i({n})" for n in maxn])
-                    snip.append(f"  s({row['trigger']}, fmta[[{body}]], {{ {nodes} }})")
+                    snip.append(f"  s(\"{row['trigger']}\", fmta([[{body}]], {{ {nodes} }})),\n")
                 case "raw":
-                    snip.append(f"  s({row['trigger']}, {{{row['body']}}})")
+                    snip.append(f"  s(\"{row['trigger']}\", {{{row['body']}}}),\n")
                 case "t":
-                    body = row['body'].replace("\n", ", ")
-                    snip.append(f"  s({row['trigger']}, t({{{body}}})")
+                    body = row['body'].replace("\"", "\\\"").replace("\n", "\",\"")
+                    snip.append(f"  s(\"{row['trigger']}\", t(\"{body}\")),\n")
 
-        print(f"~/.config/nvim/luasnippets/{tag}.lua")
-        print("local fmta = require(\"luasnip.extras.fmt\").fmta")
-        print("return {")
-        for i in snip:
-            print(i)
-        print("}")
-
+        #print(f"~/.config/nvim/luasnippets/{tag}.lua")
+        file_name = Path.home() / ".config" / "nvim" / "luasnippets" / f"{tag}.lua"
+        file = open(file_name, "w", encoding="UTF-8")
+        file.write("local fmta = require(\"luasnip.extras.fmt\").fmta\n")
+        file.write("return {\n")
+        file.writelines(snip)
+        file.write("}")
+        file.close()
