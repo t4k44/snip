@@ -41,8 +41,8 @@ def __body_clean_ip(body: str):
     """
     bodyのカーソル位置指定用記号を除去する
     """
-    body = re.sub('<[0-9]>', '', body)
-    body = body.replace('%', '')
+    body = re.sub("<[0-9]>", "", body)
+    body = body.replace("%", "")
 
     return body
 
