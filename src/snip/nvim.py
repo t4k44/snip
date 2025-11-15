@@ -1,8 +1,6 @@
 import re
 import snip.constants as C
-from pathlib import Path
 from enum import IntFlag
-from sqlite_utils import Database
 
 
 class AbbrFlag(IntFlag):
@@ -40,8 +38,7 @@ def output(db):
                     body = row['body'].replace("\"", "\\\"").replace("\n", "\",\"")
                     snip.append(f"  s(\"{row['trigger']}\", t(\"{body}\")),\n")
 
-        #print(f"~/.config/nvim/luasnippets/{tag}.lua")
-        file_name = Path.home() / ".config" / "nvim" / "luasnippets" / f"{tag}.lua"
+        file_name = C.NVIM_SNIP / f"{tag}.lua"
         file = open(file_name, "w", encoding="UTF-8")
         file.write("local fmta = require(\"luasnip.extras.fmt\").fmta\n")
         file.write("return {\n")
