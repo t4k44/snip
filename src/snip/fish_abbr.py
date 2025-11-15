@@ -3,9 +3,7 @@ from enum import IntFlag
 from pathlib import Path
 import re
 import shlex
-import subprocess
 import sys
-from sqlite_utils import Database
 
 DB_PATH = Path.home() / "share" / "llogs.db"
 
@@ -40,8 +38,10 @@ def output(db):
     # 改行で区切ってまとめて fish に渡す
     fish_cmd = "\n".join(cmds)
     try:
-        print(fish_cmd)
-    except subprocess.CalledProcessError as e:
+        file = open(C.FISH_ABBR, "w", encoding="UTF-8")
+        file.writelines(fish_cmd)
+        file.close()
+    except Exception as e:
         print(f"[ERROR] 一括登録失敗: {e}", file=sys.stderr)
         return 1
 
