@@ -24,12 +24,12 @@ def main():
 
     sub    = p.add_subparsers(dest="cmd")
     a_list = sub.add_parser("list")
-    a_list.add_argument("-f", "--fzf",  action="store_true", help="commandline fzf selector")
-    a_list.add_argument("-N", "--name", action="store_true", help="rofi app and so name")
+    a_list.add_argument("-f", "--fzf",  action="store_true", help="""commandline fzf selector
+            `commandline -i (snip list -f)` で呼び出し""")
+    a_list.add_argument("-r", "--rofi", action="store_true", help="launch rofi and snip to clipboard")
     a_list.add_argument("-s", "--fish", action="store_true", help="output fish abbr")
     a_list.add_argument("-n", "--nvim", action="store_true", help="output luasnippets list")
     a_list.add_argument("-k", "--skk",  action="store_true", help="output skk abbr")
-    a_list.add_argument("-r", "--rofi", action="store_true", help="rofi内部使用用")
     a_list.add_argument("-t", "--tag",  default="name",      help="narrow down from tag")
 
     a_add  = sub.add_parser("add")
@@ -50,12 +50,12 @@ def main():
         case "add":
             body = sys.stdin.read() if not sys.stdin.isatty() else (" ".join(args.body) or "")
             ret  = insert_snip(db, args, body)
-            print(f"DONE {ret['id']} : {ret['trigger']}")
+            print(f"DONE {ret['id']} : {ret['trigger']} / {ret['body']}")
         case "list":
             if args.fzf:
                 # `commandline -i (snip list -f)` で呼び出し
                 print(fzf_select(db))
-            elif args.name:
+            elif args.rofi:
                 rofi_name(db, args)
             elif args.fish:
                 fish_abbr.output(db)
@@ -63,8 +63,6 @@ def main():
                 nvim.output(db)
             elif args.skk:
                 skk.output(db)
-            elif args.rofi:
-                pass
             else:
                 pass
         case _:
