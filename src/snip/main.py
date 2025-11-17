@@ -13,8 +13,7 @@ import sys
 from . import __version__
 from snip.snip_list import fzf_select, rofi_name
 from snip.snip_add  import insert_snip
-from snip import fish_abbr
-from snip import nvim
+from snip import fish_abbr, nvim, skk
 from sqlite_utils   import Database
 
 
@@ -29,6 +28,7 @@ def main():
     a_list.add_argument("-N", "--name", action="store_true", help="rofi app and so name")
     a_list.add_argument("-s", "--fish", action="store_true", help="output fish abbr")
     a_list.add_argument("-n", "--nvim", action="store_true", help="output luasnippets list")
+    a_list.add_argument("-k", "--skk",  action="store_true", help="output skk abbr")
     a_list.add_argument("-r", "--rofi", action="store_true", help="rofi内部使用用")
     a_list.add_argument("-t", "--tag",  default="name",      help="narrow down from tag")
 
@@ -61,6 +61,8 @@ def main():
                 fish_abbr.output(db)
             elif args.nvim:
                 nvim.output(db)
+            elif args.skk:
+                skk.output(db)
             elif args.rofi:
                 pass
             else:
