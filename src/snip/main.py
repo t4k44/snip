@@ -57,15 +57,14 @@ def main():
 
     match args.cmd:
         case "add":
-            body = sys.stdin.read() if not sys.stdin.isatty() else (" ".join(args.body) or "")
-            ret  = SNIP.insert(db, args, body)
+            args.body = sys.stdin.read() if not sys.stdin.isatty() else (" ".join(args.body) or "")
+            ret  = SNIP.insert(db, args)
             print(f"DONE {ret['id']} : {ret['trigger']} / {ret['body']}")
         case "edit":
             ret  = SNIP.update(db, args)
             print(f"UPDATE {ret['id']} : {ret['trigger']} / {ret['body']}")
         case "list":
             if args.fzf:
-                # `commandline -i (snip list -f)` で呼び出し
                 print(fzf_select(db))
             elif args.rofi:
                 rofi_name(db, args)
