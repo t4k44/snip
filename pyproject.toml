@@ -1,6 +1,6 @@
 [project]
 name        = "snip"
-version     = "0.5.2"
+version     = "0.5.3"
 description = "snippets utils"
 readme      = "README.md"
 authors     = [

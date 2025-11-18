@@ -1,11 +1,64 @@
 #!/usr/bin/env python3
 """
-snip.py - simple snippet manager compatible with existing workflow.
+usage: snip [-h] [--version] {list,add,edit} ...
 
-Usage:
-  snip.py list            # show snippets via fzf, prints selected body to stdout
-  snip.py add [--trigger T] [--tags a,b] [--abbr N] [--memo M] [--body B]
-  cat file | snip.py add  # read body from stdin
+snippet管理tool
+
+options:
+  -h, --help       show this help message and exit
+  --version        バージョン表示
+
+subcommands:
+  主要コマンド
+
+  {list,add,edit}
+    list           snippet一覧表示 or 出力
+    add            snippet追加
+    edit           snippet編集
+
+
+list mode arguments:
+  fzf   : commandline fzf selector `commandline -i (snip list -f` で呼び出し
+  rofi  : launch rofi and snip to clipboard
+  fish  : output fish abbr
+  nvim  : output luasnippets list
+  skk   : output skk abbr
+
+positional arguments:
+  {fzf,rofi,fish,nvim,skk}
+
+options:
+  -h, --help            show this help message and exit
+  -t TAG, --tag TAG     narrow down from tag
+
+
+add mode arguments:
+  trigger               snippet trigger string
+  body                  expand strings
+
+options:
+  -h, --help            show this help message and exit
+  -t TAGS, --tags TAGS  tags split ','
+  -m MEMO, --memo MEMO  description
+  -a {1,3,5,7}, --abbr {1,3,5,7}
+                        fish abbr 1:ON / 2:Position / 4:SetCursor
+  -M {t,fmta,raw}, --mode {t,fmta,raw}
+                        nvim mode t:ON / fmta:TabStop / raw:raw
+
+edit mode arguments:
+  id                    update target id
+
+options:
+  -h, --help            show this help message and exit
+  -t TAGS, --tags TAGS  tags split ','
+  -m MEMO, --memo MEMO  description
+  -a {1,3,5,7}, --abbr {1,3,5,7}
+                        fish abbr 1:ON / 2:Position / 4:SetCursor
+  -M {t,fmta,raw}, --mode {t,fmta,raw}
+                        nvim mode t:ON / fmta:TabStop / raw:raw
+  -T TRIGGER, --trigger TRIGGER
+                        snippet trigger string
+  -b BODY, --body BODY  expand strings
 """
 import argparse
 import textwrap
@@ -25,9 +78,9 @@ def args_parse():
 
     sub = p.add_subparsers(dest="cmd", required=True, description="主要コマンド")
 
-    a_list = sub.add_parser("list", help="snippet一覧表示 or 出力",
+    a_list = sub.add_parser("list", help="list mode arguments:",
         description=textwrap.dedent("""\
-        list modeを指定:
+        list mode:
           fzf   : commandline fzf selector `commandline -i (snip list -f` で呼び出し
           rofi  : launch rofi and snip to clipboard
           fish  : output fish abbr
@@ -48,12 +101,12 @@ def args_parse():
                        help="nvim mode  t:ON / fmta:TabStop / raw:raw")
 
     # add
-    a_add = sub.add_parser("add", parents=[a_parent],        help="snippet追加")
+    a_add = sub.add_parser("add", parents=[a_parent], help="add mode arguments:")
     a_add.add_argument("trigger", help="snippet trigger string")
     a_add.add_argument("body",    nargs='*', help="expand strings")
 
     # edit
-    a_edt = sub.add_parser("edit", parents=[a_parent],       help="snippet編集")
+    a_edt = sub.add_parser("edit", parents=[a_parent], help="edit mode arguments:")
     a_edt.add_argument("-T", "--trigger", default=None,      help="snippet trigger string")
     a_edt.add_argument("-b", "--body",    default=None,      help="expand strings")
     a_edt.add_argument("id", help="update target id")
