@@ -19,42 +19,24 @@ from sqlite_utils import Database
 
 
 def args_parse():
-    p = argparse.ArgumentParser(description='snippet管理tool',
-                                formatter_class=argparse.RawDescriptionHelpFormatter)
-                                #formatter_class=argparse.RawTextHelpFormatter)
+    p = argparse.ArgumentParser(description='snippet管理tool')
     p.add_argument("--version", action="version", version=f"%(prog)s {__version__}",
                    help="バージョン表示")
 
     sub = p.add_subparsers(dest="cmd", required=True, description="主要コマンド")
-    a_list = sub.add_parser("list", help="snippet一覧表示 or 出力")
-    # a_list = sub.add_parser("list", help="snippet一覧表示 or 出力",
-    #                         description=textwrap.dedent(""" \
-    #             list modeを指定:
-    #               fzf  : commandline fzf selector `commandline -i (snip list -f` で呼び出し
-    #               rofi : launch rofi and snip to clipboard
-    #               fish : output fish abbr
-    #               nvim : output luasnippets list
-    #               skk  : output skk abbr
-    #             """))
-    a_list.add_argument("mode", choices=["fzf", "rofi", "fish", "nvim", "skk"])
+    a_list = sub.add_parser("list", help="snippet一覧表示 or 出力",
+        description=textwrap.dedent("""\
+        list modeを指定:
+          fzf   : commandline fzf selector `commandline -i (snip list -f` で呼び出し
+          rofi  : launch rofi and snip to clipboard
+          fish  : output fish abbr
+          nvim  : output luasnippets list
+          skk   : output skk abbr
+        """),
+        formatter_class=argparse.RawTextHelpFormatter)
+
     a_list.add_argument("-t", "--tag", default="name", help="narrow down from tag")
-    # a_list.add_argument("mode", choices=["fzf", "rofi", "fish", "nvim", "skk", "tag"],
-          # help="list modeを指定:\n"
-          #      "  fzf  : commandline fzf selector `commandline -i (snip list -f` で呼び出し\n"
-          #      "  rofi : launch rofi and snip to clipboard\n"
-          #      "  fish : output fish abbr\n"
-          #      "  nvim : output luasnippets list\n"
-          #      "  skk  : output skk abbr\n"
-          #      )
-          # metavar="MODE",
-          # help=textwrap.dedent("""\
-          #       list modeを指定:
-          #         fzf  : commandline fzf selector `commandline -i (snip list -f` で呼び出し
-          #         rofi : launch rofi and snip to clipboard
-          #         fish : output fish abbr
-          #         nvim : output luasnippets list
-          #         skk  : output skk abbr
-          #       """))
+    a_list.add_argument("mode", choices=["fzf", "rofi", "fish", "nvim", "skk"])
 
     # add, edit 共通引数
     a_parent = argparse.ArgumentParser(add_help=False)
