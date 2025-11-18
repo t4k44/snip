@@ -17,13 +17,13 @@ from snip import fish_abbr, nvim, skk
 from sqlite_utils import Database
 
 
-def main():
+def args_parse():
     p = argparse.ArgumentParser(description='snippet管理tool')
     p.add_argument("--version", action="version", version=f"%(prog)s {__version__}",
                    help="バージョン表示")
 
-    sub    = p.add_subparsers(dest="cmd")
-    a_list = sub.add_parser("list")
+    sub = p.add_subparsers(dest="cmd", description="主要コマンド")
+    a_list = sub.add_parser("list", help="snippet一覧表示 or 出力")
     a_list.add_argument("-f", "--fzf",  action="store_true", help="""commandline fzf selector
         `commandline -i (snip list -f)` で呼び出し
     """)
@@ -33,24 +33,31 @@ def main():
     a_list.add_argument("-k", "--skk",  action="store_true", help="output skk abbr")
     a_list.add_argument("-t", "--tag",  default="name",      help="narrow down from tag")
 
-    a_add = sub.add_parser("add")
-    a_add.add_argument("-t", "--tags",    default="fish", help="tags split ','")
-    a_add.add_argument("-m", "--memo",    default="",     help="description")
-    a_add.add_argument("-a", "--abbr",    default=0,      help="fish abbr  1:ON / 2:Position / 4:SetCursor")
-    a_add.add_argument("-M", "--mode",    default=None,   help="nvim mode  t:ON / fmta:TabStop / raw:raw")
-    a_add.add_argument("trigger", nargs='?', help="snippet trigger string")
+    # add, edit 共通引数
+    a_parent = argparse.ArgumentParser(add_help=False)
+    a_parent.add_argument("-t", "--tags",    default="fish", help="tags split ','")
+    a_parent.add_argument("-m", "--memo",    default="",     help="description")
+    a_parent.add_argument("-a", "--abbr",    default=0,      choices=[1,3,5,7],
+                       help="fish abbr  1:ON / 2:Position / 4:SetCursor")
+    a_parent.add_argument("-M", "--mode",    default=None,   choices=["t", "fmta", "raw"],
+                       help="nvim mode  t:ON / fmta:TabStop / raw:raw")
+
+    # add
+    a_add = sub.add_parser("add", parents=[a_parent],        help="snippet追加")
+    a_add.add_argument("trigger", help="snippet trigger string")
     a_add.add_argument("body",    nargs='*', help="expand strings")
 
-    a_edt = sub.add_parser("edit")
-    a_edt.add_argument("id", nargs='?',   help="update target id")
-    a_edt.add_argument("-t", "--tags",    default="fish", help="tags split ','")
-    a_edt.add_argument("-m", "--memo",    default="",     help="description")
-    a_edt.add_argument("-a", "--abbr",    default=0,      help="fish abbr  1:ON / 2:Position / 4:SetCursor")
-    a_edt.add_argument("-M", "--mode",    default=None,   help="nvim mode  t:ON / fmta:TabStop / raw:raw")
-    a_edt.add_argument("-T", "--trigger", default=None,   help="snippet trigger string")
-    a_edt.add_argument("-b", "--body",    default=None,   help="expand strings")
+    # edit
+    a_edt = sub.add_parser("edit", parents=[a_parent],       help="snippet編集")
+    a_edt.add_argument("-T", "--trigger", default=None,      help="snippet trigger string")
+    a_edt.add_argument("-b", "--body",    default=None,      help="expand strings")
+    a_edt.add_argument("id", help="update target id")
 
-    args = p.parse_args()
+    return p.parse_args()
+
+
+def main():
+    args = args_parse()
 
     C.DB_PATH.mkdir(parents=True, exist_ok=True)
     db = Database(str(C.DB_FILE))
