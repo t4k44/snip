@@ -23,7 +23,7 @@ def main():
                    help="バージョン表示")
 
     sub    = p.add_subparsers(dest="cmd")
-    a_list = sub.add_parser("list")
+    a_list = sub.add_parser("list", description="snippet一覧表示 or 出力")
     a_list.add_argument("-f", "--fzf",  action="store_true", help="""commandline fzf selector
         `commandline -i (snip list -f)` で呼び出し
     """)
@@ -36,8 +36,10 @@ def main():
     a_add = sub.add_parser("add")
     a_add.add_argument("-t", "--tags",    default="fish", help="tags split ','")
     a_add.add_argument("-m", "--memo",    default="",     help="description")
-    a_add.add_argument("-a", "--abbr",    default=0,      help="fish abbr  1:ON / 2:Position / 4:SetCursor")
-    a_add.add_argument("-M", "--mode",    default=None,   help="nvim mode  t:ON / fmta:TabStop / raw:raw")
+    a_add.add_argument("-a", "--abbr",    default=0,      choices=[1,3,5,7],
+                       help="fish abbr  1:ON / 2:Position / 4:SetCursor")
+    a_add.add_argument("-M", "--mode",    default=None,   choices=["t", "fmta", "raw"],
+                       help="nvim mode  t:ON / fmta:TabStop / raw:raw")
     a_add.add_argument("trigger", nargs='?', help="snippet trigger string")
     a_add.add_argument("body",    nargs='*', help="expand strings")
 
@@ -45,8 +47,10 @@ def main():
     a_edt.add_argument("id", nargs='?',   help="update target id")
     a_edt.add_argument("-t", "--tags",    default="fish", help="tags split ','")
     a_edt.add_argument("-m", "--memo",    default="",     help="description")
-    a_edt.add_argument("-a", "--abbr",    default=0,      help="fish abbr  1:ON / 2:Position / 4:SetCursor")
-    a_edt.add_argument("-M", "--mode",    default=None,   help="nvim mode  t:ON / fmta:TabStop / raw:raw")
+    a_add.add_argument("-a", "--abbr",    default=0,      choices=[1,3,5,7],
+                       help="fish abbr  1:ON / 2:Position / 4:SetCursor")
+    a_add.add_argument("-M", "--mode",    default=None,   choices=["t", "fmta", "raw"],
+                       help="nvim mode  t:ON / fmta:TabStop / raw:raw")
     a_edt.add_argument("-T", "--trigger", default=None,   help="snippet trigger string")
     a_edt.add_argument("-b", "--body",    default=None,   help="expand strings")
 
