@@ -33,26 +33,22 @@ def main():
     a_list.add_argument("-k", "--skk",  action="store_true", help="output skk abbr")
     a_list.add_argument("-t", "--tag",  default="name",      help="narrow down from tag")
 
-    a_add = sub.add_parser("add")
-    a_add.add_argument("-t", "--tags",    default="fish", help="tags split ','")
-    a_add.add_argument("-m", "--memo",    default="",     help="description")
-    a_add.add_argument("-a", "--abbr",    default=0,      choices=[1,3,5,7],
+    a_parent = argparse.ArgumentParser(add_help=False)
+    a_parent.add_argument("-t", "--tags",    default="fish", help="tags split ','")
+    a_parent.add_argument("-m", "--memo",    default="",     help="description")
+    a_parent.add_argument("-a", "--abbr",    default=0,      choices=[1,3,5,7],
                        help="fish abbr  1:ON / 2:Position / 4:SetCursor")
-    a_add.add_argument("-M", "--mode",    default=None,   choices=["t", "fmta", "raw"],
+    a_parent.add_argument("-M", "--mode",    default=None,   choices=["t", "fmta", "raw"],
                        help="nvim mode  t:ON / fmta:TabStop / raw:raw")
-    a_add.add_argument("trigger", nargs='?', help="snippet trigger string")
+
+    a_add = sub.add_parser("add", parents=[a_parent], description="TODO")
+    a_add.add_argument("trigger", help="snippet trigger string")
     a_add.add_argument("body",    nargs='*', help="expand strings")
 
-    a_edt = sub.add_parser("edit")
-    a_edt.add_argument("id", nargs='?',   help="update target id")
-    a_edt.add_argument("-t", "--tags",    default="fish", help="tags split ','")
-    a_edt.add_argument("-m", "--memo",    default="",     help="description")
-    a_add.add_argument("-a", "--abbr",    default=0,      choices=[1,3,5,7],
-                       help="fish abbr  1:ON / 2:Position / 4:SetCursor")
-    a_add.add_argument("-M", "--mode",    default=None,   choices=["t", "fmta", "raw"],
-                       help="nvim mode  t:ON / fmta:TabStop / raw:raw")
+    a_edt = sub.add_parser("edit", parents=[a_parent], description="TODO")
     a_edt.add_argument("-T", "--trigger", default=None,   help="snippet trigger string")
     a_edt.add_argument("-b", "--body",    default=None,   help="expand strings")
+    a_edt.add_argument("id", help="update target id")
 
     args = p.parse_args()
 
