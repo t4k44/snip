@@ -7,6 +7,9 @@ TAG_TABLE      = "tags"
 FISH_ABBR_FILE = "abbr.fish"
 SKK_ABBR_DICT  = "abbr.dict"
 
+COPYQ          = "/opt/copyq-sqlite/bin/copyq"
+ROFI_LENGTH    = 40     # rofi body表示文字数
+
 # Class : Path
 CNF_PATH  = Path.home() / ".config"
 DB_PATH   = CNF_PATH / "mine"
