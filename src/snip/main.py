@@ -17,7 +17,7 @@ from snip import fish_abbr, nvim, skk
 from sqlite_utils import Database
 
 
-def main():
+def args_parse():
     p = argparse.ArgumentParser(description='snippet管理tool')
     p.add_argument("--version", action="version", version=f"%(prog)s {__version__}",
                    help="バージョン表示")
@@ -42,16 +42,21 @@ def main():
     a_parent.add_argument("-M", "--mode",    default=None,   choices=["t", "fmta", "raw"],
                        help="nvim mode  t:ON / fmta:TabStop / raw:raw")
 
-    a_add = sub.add_parser("add", parents=[a_parent], help="snippet追加")
+    # add
+    a_add = sub.add_parser("add", parents=[a_parent],        help="snippet追加")
     a_add.add_argument("trigger", help="snippet trigger string")
     a_add.add_argument("body",    nargs='*', help="expand strings")
 
-    a_edt = sub.add_parser("edit", parents=[a_parent], help="snippet編集")
-    a_edt.add_argument("-T", "--trigger", default=None,   help="snippet trigger string")
-    a_edt.add_argument("-b", "--body",    default=None,   help="expand strings")
+    # edit
+    a_edt = sub.add_parser("edit", parents=[a_parent],       help="snippet編集")
+    a_edt.add_argument("-T", "--trigger", default=None,      help="snippet trigger string")
+    a_edt.add_argument("-b", "--body",    default=None,      help="expand strings")
     a_edt.add_argument("id", help="update target id")
 
-    args = p.parse_args()
+    return p.parse_args()
+
+def main():
+    args = args_parse()
 
     C.DB_PATH.mkdir(parents=True, exist_ok=True)
     db = Database(str(C.DB_FILE))
