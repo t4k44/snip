@@ -37,5 +37,3 @@ def update(db: Database, args):
         ret = db[C.TABLE].get(args.id)
 
     return ret
-
-

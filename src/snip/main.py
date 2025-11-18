@@ -24,6 +24,7 @@ def args_parse():
                    help="バージョン表示")
 
     sub = p.add_subparsers(dest="cmd", required=True, description="主要コマンド")
+
     a_list = sub.add_parser("list", help="snippet一覧表示 or 出力",
         description=textwrap.dedent("""\
         list modeを指定:
@@ -34,7 +35,6 @@ def args_parse():
           skk   : output skk abbr
         """),
         formatter_class=argparse.RawTextHelpFormatter)
-
     a_list.add_argument("-t", "--tag", default="name", help="narrow down from tag")
     a_list.add_argument("mode", choices=["fzf", "rofi", "fish", "nvim", "skk"])
 
@@ -76,18 +76,19 @@ def main():
             ret  = SNIP.update(db, args)
             print(f"UPDATE {ret['id']} : {ret['trigger']} / {ret['body']}")
         case "list":
-            if args.fzf:
-                print(fzf_select(db))
-            elif args.rofi:
-                rofi_name(db, args)
-            elif args.fish:
-                fish_abbr.output(db)
-            elif args.nvim:
-                nvim.output(db)
-            elif args.skk:
-                skk.output(db)
-            else:
-                pass
+            match args.mode:
+                case "fzf":
+                    print(fzf_select(db))
+                case "rofi":
+                    rofi_name(db, args)
+                case "fish":
+                    fish_abbr.output(db)
+                case "nvim":
+                    nvim.output(db)
+                case "skk":
+                    skk.output(db)
+                case _:
+                    pass
         case _:
             pass
 
