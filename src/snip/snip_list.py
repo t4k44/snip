@@ -8,35 +8,6 @@ import snip.constants as C
 from sqlite_utils import Database
 
 
-def rofi_name(db: Database, args):
-    copyq  = "/opt/copyq-sqlite/bin/copyq"
-    length = 40
-    tag    = args.tag
-    query  = f"""
-        SELECT id, trigger, replace(substr(body, 0, {length}), char(10), '⏎ ') AS body,
-               tags, replace(substr(memo, 0, {length}), char(10), '⏎ ') AS memo
-        FROM snippets
-        WHERE EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = ?)
-        """
-
-    rows = db.query(query, [tag])
-    rows = [f"{int(row['id']):3d} : {row['trigger']}\t{row['body']}\t{row['memo']}\t{row['tags']}" for row in rows]
-
-    try:
-        choice = subprocess.run(["rofi", "-dmenu", "-p", "'Snippets'"], input="\n".join(rows),
-                                stdout=subprocess.PIPE, text=True)
-        if choice.returncode != 0:
-            return
-
-        body = db[C.TABLE].get(choice.stdout.split()[0])["body"]
-        body = __body_clean_ip(body)
-        subprocess.run([copyq, "copy", body])
-        subprocess.run([copyq, "paste"])
-    except subprocess.CalledProcessError as e:
-        logging.error("stdout: %s", e.stdout)
-        logging.error("stderr: %s", e.stderr)
-
-
 def __body_clean_ip(body: str):
     """
     bodyのカーソル位置指定用記号を除去する
@@ -47,9 +18,39 @@ def __body_clean_ip(body: str):
     return body
 
 
+def rofi_name(db: Database, args):
+    tag    = args.tag
+    query  = f"""
+        SELECT id, trigger, replace(substr(body, 0, {C.ROFI_LENGTH}), char(10), '⏎ ') AS body,
+               tags, replace(substr(memo, 0, {C.ROFI_LENGTH}), char(10), '⏎ ') AS memo
+        FROM snippets
+        WHERE EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = ?)
+        ORDER BY rate DESC, id DESC
+        """
+
+    rows = db.query(query, [tag])
+    rows = [f"{int(row['id']):3d} : {row['trigger']}\t{row['body']}"
+            f"\t{row['memo']}\t{row['tags']}" for row in rows]
+
+    try:
+        choice = subprocess.run(["rofi", "-dmenu", "-p", "'Snippets'"], input="\n".join(rows),
+                                stdout=subprocess.PIPE, text=True)
+        if choice.returncode != 0:
+            return
+
+        target = db[C.TABLE].get(choice.stdout.split()[0])
+        db[C.TABLE].update(target["id"], {"rate": target["rate"] + 1})
+        body = __body_clean_ip(target["body"])
+        subprocess.run([C.COPYQ, "copy", body])
+        subprocess.run([C.COPYQ, "paste"])
+    except subprocess.CalledProcessError as e:
+        logging.error("stdout: %s", e.stdout)
+        logging.error("stderr: %s", e.stderr)
+
+
 def fzf_select(db: Database):
     lines = []
-    for row in db[C.TABLE].rows_where(order_by="id DESC"):
+    for row in db[C.TABLE].rows_where(order_by="rate DESC, id DESC"):
         body = "⏎ ".join(row["body"].splitlines())
         body = __body_clean_ip(body)
         tags = json.loads(row["tags"])
@@ -81,8 +82,11 @@ def fzf_select(db: Database):
     id_selected = chosen.split("\t", 1)[0]
 
     # fetch full body
-    row = db[C.TABLE].get(id_selected)
-    body = row["body"] if row else ""
-    body = __body_clean_ip(body)
+    row  = db[C.TABLE].get(id_selected)
+    body = ""
+    if row:
+        db[C.TABLE].update(row["id"], {"rate": row["rate"] + 1})
+        body = row["body"]
+        body = __body_clean_ip(body)
 
     return body
