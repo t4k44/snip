@@ -21,16 +21,16 @@ def args_parse():
     sub = p.add_subparsers(dest="cmd", required=True, description="主要コマンド")
 
     a_list = sub.add_parser("list", help="list mode arguments:",
-        description=textwrap.dedent("""\
+        description=textwrap.dedent(f"""\
         list mode:
-          fzf   : commandline fzf selector `commandline -i (snip list -f` で呼び出し
-          rofi  : launch rofi and snip to clipboard
-          fish  : output fish abbr
-          nvim  : output luasnippets list
-          skk   : output skk abbr
+          fzf   : commandline fzf selector `commandline -i (snip list fzf)` で呼び出し
+          rofi  : launch rofi and snip to clipboard and paste
+          fish  : output fish abbr          (path: {C.FISH_ABBR})
+          nvim  : output luasnippets list   (path: {C.NVIM_SNIP})
+          skk   : output skk abbr           (path: {C.SKK_ABBR})
         """),
         formatter_class=argparse.RawTextHelpFormatter)
-    a_list.add_argument("-t", "--tag", default="name", help="narrow down from tag")
+    a_list.add_argument("-t", "--tag", help="narrow down from tag")
     a_list.add_argument("mode", choices=["fzf", "rofi", "fish", "nvim", "skk"])
 
     # add, edit 共通引数
@@ -72,7 +72,7 @@ def main():
             print(f"UPDATE {ret['id']} : {ret['trigger']} / {ret['body']}")
         case "list":
             match args.mode:
-                case "fzf":  print(fzf_select(db))
+                case "fzf":  print(fzf_select(db, args))
                 case "rofi": rofi_name(db, args)
                 case "fish": fish_abbr.output(db)
                 case "nvim": nvim.output(db)
