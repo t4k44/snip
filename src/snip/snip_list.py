@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from argparse import Namespace
 import json
 import re
 import subprocess
@@ -19,7 +20,7 @@ def __body_clean_ip(body: str):
 
 
 def rofi_name(db: Database, args):
-    tag    = args.tag
+    tag    = args.tag or "name"
     query  = f"""
         SELECT id, trigger, replace(substr(body, 0, {C.ROFI_LENGTH}), char(10), '⏎ ') AS body,
                tags, replace(substr(memo, 0, {C.ROFI_LENGTH}), char(10), '⏎ ') AS memo
@@ -48,9 +49,11 @@ def rofi_name(db: Database, args):
         logging.error("stderr: %s", e.stderr)
 
 
-def fzf_select(db: Database):
+def fzf_select(db: Database, args: Namespace):
     lines = []
-    for row in db[C.TABLE].rows_where(order_by="rate DESC, id DESC"):
+    # query = f"tags like '%{args.tag}%'" if args.tag else None
+    query = f"EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = '{args.tag}')" if args.tag else None
+    for row in db[C.TABLE].rows_where(query, order_by="rate DESC, id DESC"):
         body = "⏎ ".join(row["body"].splitlines())
         body = __body_clean_ip(body)
         tags = json.loads(row["tags"])
