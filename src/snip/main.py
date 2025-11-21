@@ -37,7 +37,7 @@ def args_parse():
     a_parent = argparse.ArgumentParser(add_help=False)
     a_parent.add_argument("-t", "--tags",    default="fish", help="tags split ','")
     a_parent.add_argument("-m", "--memo",    default="",     help="description")
-    a_parent.add_argument("-a", "--abbr",    default=0,      choices=[1,3,5,7],
+    a_parent.add_argument("-a", "--abbr",    default=0,      choices=['0','1','3','5','7'],
                           help="fish abbr  1:ON / 2:Position / 4:SetCursor")
     a_parent.add_argument("-M", "--mode",    default=None,   choices=["t", "fmta", "raw"],
                           help="nvim mode  t:ON / fmta:TabStop / raw:raw")
