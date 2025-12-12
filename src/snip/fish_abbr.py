@@ -1,12 +1,8 @@
 import snip.constants as C
 from enum import IntFlag
-from pathlib import Path
 import re
 import shlex
 import sys
-
-DB_PATH = Path.home() / "share" / "llogs.db"
-
 
 class AbbrFlag(IntFlag):
     SIMPLE            = 1
@@ -16,7 +12,7 @@ class AbbrFlag(IntFlag):
 
 def output(db):
     cmds = []
-    for row in db["snippets"].rows_where("abbr & 1 = 1", select="trigger, body, abbr"):
+    for row in db["snippets"].rows_where("abbr & 1 = 1", select="trigger, body, abbr, fish_cur_mark"):
         flags = AbbrFlag(row["abbr"])
         if AbbrFlag.SIMPLE in flags:
             parts = ["abbr", "--add"]
@@ -25,7 +21,10 @@ def output(db):
                 parts += ["--position", "anywhere"]
 
             if AbbrFlag.SET_CURSOR in flags:
-                parts += ["--set-cursor"]
+                if row["fish_cur_mark"]:
+                    parts += [f"--set-cursor={row['fish_cur_mark']}"]
+                else:
+                    parts += ["--set-cursor"]
 
             parts += ["--", row["trigger"], re.sub("<[0-9]>", "", row["body"])]
             # 各引数をシェル安全にクォートして連結
@@ -35,7 +34,6 @@ def output(db):
         print("登録対象なし")
         return 0
 
-    # 改行で区切ってまとめて fish に渡す
     fish_cmd = "\n".join(cmds)
     try:
         file = open(C.FISH_ABBR, "w", encoding="UTF-8")

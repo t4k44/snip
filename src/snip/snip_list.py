@@ -7,14 +7,20 @@ import subprocess
 import logging
 import snip.constants as C
 from sqlite_utils import Database
+from snip.fish_abbr import AbbrFlag
 
 
-def __body_clean_ip(body: str):
+def __body_clean_ip(row):
     """
     bodyのカーソル位置指定用記号を除去する
     """
-    body = re.sub("<[0-9]>", "", body)
-    body = body.replace("%", "")
+    body = row["body"]
+    if row["mode"]:
+        body = re.sub("<[0-9]>", "", body)
+
+    if AbbrFlag.SET_CURSOR in AbbrFlag(row["abbr"]):
+        mark = row["fish_cur_mark"] or "%"
+        body = body.replace(mark, "")
 
     return body
 
@@ -54,8 +60,10 @@ def fzf_select(db: Database, args: Namespace):
     # query = f"tags like '%{args.tag}%'" if args.tag else None
     query = f"EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = '{args.tag}')" if args.tag else None
     for row in db[C.TABLE].rows_where(query, order_by="rate DESC, id DESC"):
-        body = "⏎ ".join(row["body"].splitlines())
-        body = __body_clean_ip(body)
+        body = __body_clean_ip(row)
+        body = "⏎ ".join(body.splitlines())
+        # if __is_fish_abbr_cursole(row):
+        #     body = __body_clean_ip(body, row["fish_cur_mark"])
         tags = json.loads(row["tags"])
         lngm = (tags[0] if tags and tags[0] != "name" else "txt")
         lngm = "vim" if lngm == "nvim" else lngm
@@ -89,7 +97,6 @@ def fzf_select(db: Database, args: Namespace):
     body = ""
     if row:
         db[C.TABLE].update(row["id"], {"rate": row["rate"] + 1})
-        body = row["body"]
-        body = __body_clean_ip(body)
+        body = __body_clean_ip(row)
 
     return body
