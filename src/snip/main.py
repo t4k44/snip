@@ -39,6 +39,8 @@ def args_parse():
     a_parent.add_argument("-m", "--memo",    default="",     help="description")
     a_parent.add_argument("-a", "--abbr",    default=0,      choices=['0','1','3','5','7'],
                           help="fish abbr  1:ON / 2:Position / 4:SetCursor")
+    a_parent.add_argument("-c", "--fish_cur_mark", default=None,
+                          help="fish abbr cursor mark.")
     a_parent.add_argument("-M", "--mode",    default=None,   choices=["t", "fmta", "raw"],
                           help="nvim mode  t:ON / fmta:TabStop / raw:raw")
 
@@ -67,6 +69,7 @@ def main():
             args.body = sys.stdin.read() if not sys.stdin.isatty() else (" ".join(args.body) or "")
             ret       = SNIP.insert(db, args)
             print(f"DONE {ret['id']} : {ret['trigger']} / {ret['body']}")
+            print(args.fish_cur_mark)
         case "edit":
             ret  = SNIP.update(db, args)
             print(f"UPDATE {ret['id']} : {ret['trigger']} / {ret['body']}")
