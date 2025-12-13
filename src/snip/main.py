@@ -69,7 +69,6 @@ def main():
             args.body = sys.stdin.read() if not sys.stdin.isatty() else (" ".join(args.body) or "")
             ret       = SNIP.insert(db, args)
             print(f"DONE {ret['id']} : {ret['trigger']} / {ret['body']}")
-            print(args.fish_cur_mark)
         case "edit":
             ret  = SNIP.update(db, args)
             print(f"UPDATE {ret['id']} : {ret['trigger']} / {ret['body']}")
