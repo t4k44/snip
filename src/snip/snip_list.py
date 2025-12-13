@@ -18,7 +18,7 @@ def __body_clean_ip(row):
     if row["mode"]:
         body = re.sub("<[0-9]>", "", body)
 
-    if AbbrFlag.SET_CURSOR in AbbrFlag(row["abbr"]):
+    if row["abbr"] and AbbrFlag.SET_CURSOR in AbbrFlag(row["abbr"]):
         mark = row["fish_cur_mark"] or "%"
         body = body.replace(mark, "")
 
