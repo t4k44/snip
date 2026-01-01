@@ -48,22 +48,23 @@ def rofi_name(db: Database, args):
         target = db[C.TABLE].get(choice.stdout.split()[0])
         db[C.TABLE].update(target["id"], {"rate": target["rate"] + 1})
         body = __body_clean_ip(target["body"])
-        subprocess.run([C.COPYQ, "copy", body])
-        subprocess.run([C.COPYQ, "paste"])
+        subprocess.run(C.CLIP_COPY_CMD + [body])
+        subprocess.run(C.CLIP_PASTE_CMD)
+
     except subprocess.CalledProcessError as e:
         logging.error("stdout: %s", e.stdout)
         logging.error("stderr: %s", e.stderr)
 
 
+# TODO: raw実装 snip-fzf.sh
+# https://gemini.google.com/app/ed6a3ad7bd5daf16?hl=ja
 def fzf_select(db: Database, args: Namespace):
     lines = []
-    # query = f"tags like '%{args.tag}%'" if args.tag else None
+
     query = f"EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = '{args.tag}')" if args.tag else None
     for row in db[C.TABLE].rows_where(query, order_by="rate DESC, id DESC"):
         body = __body_clean_ip(row)
         body = "⏎ ".join(body.splitlines())
-        # if __is_fish_abbr_cursole(row):
-        #     body = __body_clean_ip(body, row["fish_cur_mark"])
         tags = json.loads(row["tags"])
         lngm = (tags[0] if tags and tags[0] != "name" else "txt")
         lngm = "vim" if lngm == "nvim" else lngm
