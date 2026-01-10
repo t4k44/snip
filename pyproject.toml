@@ -1,6 +1,6 @@
 [project]
 name        = "snip"
-version     = "0.5.10"
+version     = "0.5.11"
 description = "snippets utils"
 readme      = "README.md"
 authors     = [
@@ -8,6 +8,7 @@ authors     = [
 ]
 requires-python = ">=3.11"
 dependencies = [
+    "argcomplete>=3.6.3",
     "argparse>=1.4.0",
     "sqlite-utils>=3.38",
 ]

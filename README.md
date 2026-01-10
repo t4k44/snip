@@ -14,18 +14,10 @@
 
 ## Installation
 
-`pyproject.toml`に記載されている依存関係は以下の通りです。
-
-- `argparse>=1.4.0`
-- `sqlite-utils>=3.38`
-
-これらの依存関係をインストールした後、`snip`をインストールしてください。
-
 ```bash
-# uv を使用する場合
-uv pip install .
-# pip を使用する場合
-pip install .
+git clone git@github.com:t4k44/snip.git
+cd snip
+uv tool install .
 ```
 
 ## Usage
@@ -96,6 +88,7 @@ snip add -a 1 -c "%" fish_hello "echo Hello, %world!"
 
 ### `edit` コマンド
 
+<!-- TODO: 共通opt無い？ -->
 既存のスニペットを編集します。
 
 - `-T`, `--trigger`: スニペットのトリガー文字列。

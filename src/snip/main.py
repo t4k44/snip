@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-"""
-usage: snip [-h] [--version] {list,add,edit} ...
-"""
+
+import argcomplete
 import argparse
 import textwrap
 import snip.constants as C
@@ -55,6 +54,7 @@ def args_parse():
     a_edt.add_argument("-b", "--body",    default=None,      help="expand strings")
     a_edt.add_argument("id", help="update target id")
 
+    argcomplete.autocomplete(p)
     return p.parse_args()
 
 
