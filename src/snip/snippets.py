@@ -24,7 +24,6 @@ def insert(db: Database, args):
 
 
 def update(db: Database, args):
-
     with db.conn:
         target = db[C.TABLE].get(args.id)
         target.update(dict_pickup(vars(args), C.TARGET_FIELD))
