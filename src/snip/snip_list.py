@@ -9,16 +9,21 @@ import snip.constants as C
 from sqlite_utils import Database
 from snip.fish_abbr import AbbrFlag
 
+import time
+import sys
+logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format='%(levelname)s: %(message)s')
+
 
 def __body_clean_ip(row):
     """
     bodyのカーソル位置指定用記号を除去する
     """
+    logging.debug("__body_clean_ip: 開始 (target['id']: %s)", row.get("id"))
     body = row["body"]
-    if row["mode"]:
+    if row.get("mode"):
         body = re.sub("<[0-9]>", "", body)
 
-    if row["abbr"] and AbbrFlag.SET_CURSOR in AbbrFlag(row["abbr"]):
+    if row.get("abbr") and AbbrFlag.SET_CURSOR in AbbrFlag(row["abbr"]):
         mark = row["fish_cur_mark"] or "%"
         body = body.replace(mark, "")
 
@@ -46,10 +51,15 @@ def rofi_name(db: Database, args):
             return
 
         target = db[C.TABLE].get(choice.stdout.split()[0])
+
         db[C.TABLE].update(target["id"], {"rate": target["rate"] + 1})
-        body = __body_clean_ip(target["body"])
-        subprocess.run(C.CLIP_COPY_CMD + [body])
-        subprocess.run(C.CLIP_PASTE_CMD)
+        logging.info(target["body"])
+        body = __body_clean_ip(target)
+        logging.info(body)
+        subprocess.run(C.CLIP_COPY_CMD + [body], check=True)
+        time.sleep(0.1)
+        subprocess.run(C.CLIP_PASTE_CMD, check=True)
+        logging.info("done")
 
     except subprocess.CalledProcessError as e:
         logging.error("stdout: %s", e.stdout)
