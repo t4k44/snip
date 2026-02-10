@@ -11,14 +11,14 @@ from snip.fish_abbr import AbbrFlag
 
 import time
 import sys
-logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format='%(levelname)s: %(message)s')
+# logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format='%(levelname)s: %(message)s')
 
 
 def __body_clean_ip(row):
     """
     bodyのカーソル位置指定用記号を除去する
     """
-    logging.debug("__body_clean_ip: 開始 (target['id']: %s)", row.get("id"))
+    # logging.debug("__body_clean_ip: 開始 (target['id']: %s)", row.get("id"))
     body = row["body"]
     if row.get("mode"):
         body = re.sub("<[0-9]>", "", body)
