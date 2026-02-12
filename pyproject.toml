@@ -1,13 +1,14 @@
 [project]
 name        = "snip"
-version     = "0.5.9"
+version     = "0.5.13"
 description = "snippets utils"
 readme      = "README.md"
 authors     = [
-    { name = "Takashi Kikuchi", email = "tkskkc@gmail.com" }
+    { name = "t4k44", email = "95964+t4k44@users.noreply.github.com" }
 ]
 requires-python = ">=3.11"
 dependencies = [
+    "argcomplete>=3.6.3",
     "argparse>=1.4.0",
     "sqlite-utils>=3.38",
 ]
