@@ -6,7 +6,7 @@ import textwrap
 import snip.constants as C
 import sys
 from . import __version__
-from snip.snip_list import fzf_select, rofi_name
+from snip.snip_list import fzf_select, rofi_name, cheat_sheet
 import snip.snippets as SNIP
 from snip import fish_abbr, nvim, skk
 from sqlite_utils import Database
@@ -22,15 +22,16 @@ def args_parse():
     a_list = sub.add_parser("list", help="list mode arguments:",
         description=textwrap.dedent(f"""\
         list mode:
-          fzf   : commandline fzf selector `commandline -i (snip list fzf)` で呼び出し
-          rofi  : launch rofi and snip to clipboard and paste
-          fish  : output fish abbr          (path: {C.FISH_ABBR})
-          nvim  : output luasnippets list   (path: {C.NVIM_SNIP})
-          skk   : output skk abbr           (path: {C.SKK_ABBR})
+          fzf         : commandline fzf selector `commandline -i (snip list fzf)` で呼び出し
+          rofi        : launch rofi and snip to clipboard and paste
+          fish        : output fish abbr          (path: {C.FISH_ABBR})
+          nvim        : output luasnippets list   (path: {C.NVIM_SNIP})
+          skk         : output skk abbr           (path: {C.SKK_ABBR})
+          cheat_sheet : output cheat sheet
         """),
         formatter_class=argparse.RawTextHelpFormatter)
     a_list.add_argument("-t", "--tag", help="narrow down from tag")
-    a_list.add_argument("mode", choices=["fzf", "rofi", "fish", "nvim", "skk"])
+    a_list.add_argument("mode", choices=["fzf", "rofi", "fish", "nvim", "skk", "cheat_sheet"])
 
     # add, edit 共通引数
     a_parent = argparse.ArgumentParser(add_help=False)
@@ -79,6 +80,7 @@ def main():
                 case "fish": fish_abbr.output(db)
                 case "nvim": nvim.output(db)
                 case "skk":  skk.output(db)
+                case "cheat_sheet":  cheat_sheet(db, args)
                 case _: pass
         case _: pass
 

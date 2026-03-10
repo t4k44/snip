@@ -1,16 +1,17 @@
-#!/usr/bin/env python3
-
-from argparse import Namespace
 import json
-import re
-import subprocess
 import logging
+import re
 import snip.constants as C
-from sqlite_utils import Database
-from snip.fish_abbr import AbbrFlag
-
-import time
+import subprocess
 import sys
+import time
+
+from argparse       import Namespace
+from rich.console   import Console
+from rich.table     import Table
+from snip.fish_abbr import AbbrFlag
+from sqlite_utils   import Database
+
 # logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format='%(levelname)s: %(message)s')
 
 
@@ -111,3 +112,22 @@ def fzf_select(db: Database, args: Namespace):
         body = __body_clean_ip(row)
 
     return body
+
+
+def cheat_sheet(db: Database, args: Namespace):
+    if not args.tag:
+        return
+
+    table = Table(title=args.tag)
+    # table.add_column("", justify="right", no_wrap=True)
+    table.add_column("abbr")
+    table.add_column("cmd")
+    table.add_column("memo")
+
+    query = f"EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = ?)"
+    for row in db[C.TABLE].rows_where(query, [args.tag], order_by="trigger",
+                                      select="id, trigger, body, tags, memo"):
+        tags = json.loads(row["tags"])
+        table.add_row(row["trigger"], row["body"], row["memo"])
+
+    Console().print(table)
