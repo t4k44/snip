@@ -1,8 +1,10 @@
-import snip.constants as C
-from enum import IntFlag
 import re
 import shlex
 import sys
+from enum import IntFlag
+
+import snip.constants as C
+
 
 class AbbrFlag(IntFlag):
     SIMPLE            = 1

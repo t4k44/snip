@@ -1,6 +1,7 @@
 import re
-import snip.constants as C
 from enum import IntFlag
+
+import snip.constants as C
 
 
 class AbbrFlag(IntFlag):

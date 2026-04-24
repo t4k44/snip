@@ -1,5 +1,6 @@
-import snip.constants as C
 from sqlite_utils import Database
+
+import snip.constants as C
 
 
 def dict_pickup(target: dict, fields: list):

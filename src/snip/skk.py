@@ -1,7 +1,8 @@
-import re
-import snip.constants as C
 from enum import IntFlag
+
 from sqlite_utils import Database
+
+import snip.constants as C
 
 
 class AbbrFlag(IntFlag):

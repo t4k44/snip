@@ -20,3 +20,40 @@ snip = "snip.main:main"
 [build-system]
 requires = ["uv_build>=0.9.8,<0.10.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "debugpy>=1.8.20",
+    "ipdb>=0.13.13",
+    "pytest>=9.0.3",
+    "pytest-cov>=7.1.0",
+    "pytest-mock>=3.15.1",
+    "ruff>=0.15.11",
+    "setuptools>=82.0.1",   # --editable の使用や名前解決の安定化
+]
+
+[tool.ruff]
+line-length = 120
+exclude = [".venv", "venv", "build", "dist"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+ignore = [
+  "E272",   # キーワード前のスペースが複数
+  "E701",   # 1行に複数のステートメント
+]
+
+[tool.ruff.format]
+# Black互換のフォーマッタを有効化
+quote-style = "double"
+
+[tool.uv.sources]
+pyutils = { path = "../pyutils", editable = true }
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = [
+  "S101",   # assert の使用を許可
+  "ARG",    # 未使用の引数を許可（fixture用）
+  "F811",   # 再定義を許可（fixture用）
+  "E501",   # 長いテストデータを許可
+]

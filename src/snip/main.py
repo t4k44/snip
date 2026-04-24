@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 
-import argcomplete
 import argparse
-import textwrap
-import snip.constants as C
 import sys
-from . import __version__
-from snip.snip_list import fzf_select, rofi_name, cheat_sheet
+import textwrap
+
+import argcomplete
+from sqlite_utils import Database
+
+import snip.constants as C
 import snip.snippets as SNIP
 from snip import fish_abbr, nvim, skk
-from sqlite_utils import Database
+from snip.snip_list import cheat_sheet, fzf_select, rofi_name
+
+from . import __version__
 
 
 def args_parse():

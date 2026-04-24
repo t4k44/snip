@@ -1,16 +1,16 @@
 import json
 import logging
 import re
-import snip.constants as C
 import subprocess
-import sys
 import time
+from argparse import Namespace
 
-from argparse       import Namespace
-from rich.console   import Console
-from rich.table     import Table
+from rich.console import Console
+from rich.table import Table
+from sqlite_utils import Database
+
+import snip.constants as C
 from snip.fish_abbr import AbbrFlag
-from sqlite_utils   import Database
 
 # logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format='%(levelname)s: %(message)s')
 
@@ -124,7 +124,7 @@ def cheat_sheet(db: Database, args: Namespace):
     table.add_column("cmd")
     table.add_column("memo")
 
-    query = f"EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = ?)"
+    query = "EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = ?)"
     for row in db[C.TABLE].rows_where(query, [args.tag], order_by="trigger",
                                       select="id, trigger, body, tags, memo"):
         tags = json.loads(row["tags"])
