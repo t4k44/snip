@@ -67,7 +67,17 @@ def rofi_name(db: Database, args):
         logging.error("stderr: %s", e.stderr)
 
 
+# サブコマンド 役割 出力イメージ
+# snip list raw     fzf に渡す一覧 ID\tTrigger\tMemo\tTags...
+# snip preview <id> プレビュー画面用 Body + --- + Memo (色付き)
+# snip get     <id> 確定後の取得 Body のみ出力（ついでに rate を加算）
+# snip edit    <id> 編集 指定 ID を一時ファイルで開いて更新
+# snip delete  <id> 削除 指定 ID を物理削除
 def fzf_select(db: Database, args: Namespace):
+    import os
+    import subprocess
+
+    script_path = os.path.expanduser("~/scripts/snip-fzf.sh")
     lines = []
 
     query = f"EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = '{args.tag}')" if args.tag else None
@@ -79,20 +89,11 @@ def fzf_select(db: Database, args: Namespace):
         lngm = "vim" if lngm == "nvim" else lngm
         lines.append(f'{row["id"]}\t{row["trigger"]}\t{body}\t[tags: {",".join(tags)}]\t{lngm}')
 
-    fzf = subprocess.Popen(
-        ["fzf", "--with-nth=2,3,4", "--delimiter=\t", "--no-unicode", "--preview",
-            f"sqlite3 {str(C.DB_FILE)} \"SELECT body || char(10) || '--------' || char(10) || "
-            f"memo || char(10) || '--------' || char(10) || id || ':' || "
-            f"tags FROM {C.TABLE} WHERE id = {{1}}\" | "
-                   f"batcat -pl {{5}} --color=always",
-            "--preview-window=right,50%,wrap",
-            "--bind", "enter:accept",
-            "--bind", f"ctrl-e:execute(sqlite-utils rows {str(C.DB_FILE)} {C.TABLE} --where \"id={{1}}\" "
-                   f"--nl --json-cols | jq . > /tmp/snp_edit.json && nvim /tmp/snp_edit.json && "
-                   f"sqlite-utils upsert {str(C.DB_FILE)} snippets /tmp/snp_edit.json --pk id)",
-            "--bind", f"ctrl-d:execute(sqlite-utils query {str(C.DB_FILE)} "
-                   f"\"DELETE FROM {C.TABLE} WHERE id={{1}}\")"
-        ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True)
+    fzf = subprocess.Popen([script_path],
+                           stdin=subprocess.PIPE,
+                           stdout=subprocess.PIPE,
+                           text=True)
+
     stdin_data = "\n".join(lines)
     stdout, _ = fzf.communicate(stdin_data)
     if not stdout:

@@ -9,7 +9,7 @@ from sqlite_utils import Database
 
 import snip.constants as C
 import snip.snippets as SNIP
-from snip import fish_abbr, nvim, skk
+from snip import fish_abbr, nvim, skk, tui
 from snip.snip_list import cheat_sheet, fzf_select, rofi_name
 
 from . import __version__
@@ -21,6 +21,11 @@ def args_parse():
                    help="バージョン表示")
 
     sub = p.add_subparsers(dest="cmd", required=True, description="主要コマンド")
+
+    a_tui  = sub.add_parser("tui",  help="tui")
+    a_tui.add_argument("mode", choices=["raw", "get", "preview", "edit", "delete"])
+    a_tui.add_argument("id", nargs="?", help="ID")
+    a_tui.add_argument("-t", "--tag", help="narrow down from tag")
 
     a_list = sub.add_parser("list", help="list mode arguments:",
         description=textwrap.dedent(f"""\
@@ -76,6 +81,16 @@ def main():
         case "edit":
             ret  = SNIP.update(db, args)
             print(f"UPDATE {ret['id']} : {ret['trigger']} / {ret['body']}")
+        case "tui":
+            if args.mode in ["preview", "get", "edit", "delete"] and args.id is None:
+                a_tui.error(f"mode: '{args.mode}' requires an ID")
+            match args.mode:
+                case "raw":     print(tui.raw(db, args))
+                case "get":     print(tui.get(db, args))
+                case "edit":    print(tui.get(db, args))
+                case "preview": print(tui.get(db, args))
+                case "delete":  print(tui.get(db, args))
+                case _: pass
         case "list":
             match args.mode:
                 case "fzf":  print(fzf_select(db, args))
