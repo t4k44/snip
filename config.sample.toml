@@ -1,0 +1,28 @@
+[paths]
+db_file = "snippets.db"
+
+nvim_snip_dir  = "nvim/luasnippets"
+fish_abbr_file = "fish/abbr.fish"
+skk_abbr_file  = "ibus-skk/abbr.dict"
+
+[db]
+table = "snippets"
+tag_table = "tags"
+
+# fields used for search / export / sync
+target_field = [
+  "trigger",
+  "body",
+  "memo",
+  "abbr",
+  "tags",
+  "mode",
+  "fish_cur_mark",
+]
+
+[apps]
+rofi = ["rofi", "-dmenu", "-p", "Snippets", "-l", "40"]
+fzf  = ["fzf", "--header", "Snippets"]
+
+copy_cmd  = ["copyq", "copy"]
+paste_cmd = ["copyq", "paste"]

@@ -34,8 +34,8 @@ def __body_clean_ip(row):
 def rofi_name(db: Database, args):
     tag    = args.tag or "name"
     query  = f"""
-        SELECT id, trigger, replace(substr(body, 0, {C.ROFI_LENGTH}), char(10), '⏎ ') AS body,
-               tags, replace(substr(memo, 0, {C.ROFI_LENGTH}), char(10), '⏎ ') AS memo
+        SELECT id, trigger, replace(substr(body, 0, {C.ROFI_STRLEN}), char(10), '⏎ ') AS body,
+               tags, replace(substr(memo, 0, {C.ROFI_STRLEN}), char(10), '⏎ ') AS memo
         FROM snippets
         WHERE EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = ?)
         ORDER BY rate DESC, id DESC
