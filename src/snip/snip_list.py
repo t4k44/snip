@@ -1,10 +1,10 @@
 import json
-import logging
 import re
 import subprocess
 import time
 from argparse import Namespace
 
+from pyutils.logger import setup_logger
 from rich.console import Console
 from rich.table import Table
 from sqlite_utils import Database
@@ -12,14 +12,13 @@ from sqlite_utils import Database
 import snip.constants as C
 from snip.fish_abbr import AbbrFlag
 
-# logging.basicConfig(level=logging.DEBUG, stream=sys.stderr, format='%(levelname)s: %(message)s')
 
+logging = setup_logger(__name__)
 
 def __body_clean_ip(row):
     """
     bodyのカーソル位置指定用記号を除去する
     """
-    # logging.debug("__body_clean_ip: 開始 (target['id']: %s)", row.get("id"))
     body = row["body"]
     if row.get("mode"):
         body = re.sub("<[0-9]>", "", body)
@@ -39,28 +38,25 @@ def rofi_name(db: Database, args):
         FROM snippets
         WHERE EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = ?)
         ORDER BY rate DESC, id DESC
-        """
+    """
 
     rows = db.query(query, [tag])
     rows = [f"{row['trigger']}\t / \t{row['body']}"
             f"\t{row['memo']}\t{row['tags']}\t{int(row['id']):04d}" for row in rows]
 
     try:
-        choice = subprocess.run(C.ROFI, input="\n".join(rows),
-                                stdout=subprocess.PIPE, text=True)
-        if choice.returncode != 0:
-            return
+        choice = subprocess.run(C.ROFI, input="\n".join(rows), stdout=subprocess.PIPE, text=True)
+        if choice.returncode != 0: return
 
         target = db[C.TABLE].get(choice.stdout.split()[-1])
 
         db[C.TABLE].update(target["id"], {"rate": target["rate"] + 1})
-        logging.info(target["body"])
+        logging.debug(target["body"])
         body = __body_clean_ip(target)
-        logging.info(body)
+        logging.debug(body)
         subprocess.run(C.CLIP_COPY_CMD + [body], check=True)
-        time.sleep(0.1)
         subprocess.run(C.CLIP_PASTE_CMD, check=True)
-        logging.info("done")
+        logging.debug("DONE")
 
     except subprocess.CalledProcessError as e:
         logging.error("stdout: %s", e.stdout)
@@ -68,11 +64,11 @@ def rofi_name(db: Database, args):
 
 
 # サブコマンド 役割 出力イメージ
-# snip list raw     fzf に渡す一覧 ID\tTrigger\tMemo\tTags...
-# snip preview <id> プレビュー画面用 Body + --- + Memo (色付き)
-# snip get     <id> 確定後の取得 Body のみ出力（ついでに rate を加算）
-# snip edit    <id> 編集 指定 ID を一時ファイルで開いて更新
-# snip delete  <id> 削除 指定 ID を物理削除
+# snip tui raw     fzf に渡す一覧 ID\tTrigger\tMemo\tTags...
+# snip tui preview <id> プレビュー画面用 Body + --- + Memo (色付き)
+# snip tui get     <id> 確定後の取得 Body のみ出力（ついでに rate を加算）
+# snip tui edit    <id> 編集 指定 ID を一時ファイルで開いて更新
+# snip tui delete  <id> 削除 指定 ID を物理削除
 def fzf_select(db: Database, args: Namespace):
     import os
     import subprocess

@@ -34,3 +34,7 @@ def update(db: Database, args):
         ret = db[C.TABLE].get(args.id)
 
     return ret
+
+def delete(db: Database, args):
+    with db.conn:
+        db[C.TABLE].delete(args.id)

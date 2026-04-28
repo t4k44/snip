@@ -489,7 +489,7 @@ wheels = [
 
 [[package]]
 name = "snip"
-version = "0.5.15"
+version = "0.6.0"
 source = { editable = "." }
 dependencies = [
     { name = "argcomplete" },

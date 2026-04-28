@@ -38,8 +38,8 @@ def __body_clean_ip(row):
 
 def raw(db: Database, args: Namespace):
     lines = []
-
     query = f"EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = '{args.tag}')" if args.tag else None
+
     for row in db[C.TABLE].rows_where(query, order_by="rate DESC, id DESC"):
         body = __body_clean_ip(row)
         body = "⏎ ".join(body.splitlines())
@@ -50,11 +50,17 @@ def raw(db: Database, args: Namespace):
 
     return "\n".join(lines)
 
-def get(db: Database, args: Namespace):
-    # fzf returns the chosen line; id is first column
-    #chosen = stdout.strip().split("\n")[-1]
-    #id_selected = chosen.split("\t", 1)[0]
+def preview(db: Database, args: Namespace):
+    row  = db[C.TABLE].get(args.id)
+    if not row: return ""
 
+    body  = __body_clean_ip(row)
+    body += "\n---\n"
+    body += row.get("memo", "")
+
+    return body
+
+def get(db: Database, args: Namespace):
     row  = db[C.TABLE].get(args.id)
     body = ""
     if row:

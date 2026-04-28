@@ -6,6 +6,7 @@ import textwrap
 
 import argcomplete
 from sqlite_utils import Database
+from pyutils.logger import setup_logger
 
 import snip.constants as C
 import snip.snippets as SNIP
@@ -14,6 +15,8 @@ from snip.snip_list import cheat_sheet, fzf_select, rofi_name
 
 from . import __version__
 
+
+logger = setup_logger(__name__)
 
 def args_parse():
     p = argparse.ArgumentParser(description='snippet管理tool')
@@ -24,8 +27,8 @@ def args_parse():
 
     a_tui  = sub.add_parser("tui",  help="tui")
     a_tui.add_argument("mode", choices=["raw", "get", "preview", "edit", "delete"])
-    a_tui.add_argument("id", nargs="?", help="ID")
-    a_tui.add_argument("-t", "--tag", help="narrow down from tag")
+    a_tui.add_argument("id", nargs="?", help="対象ID")
+    a_tui.add_argument("-t", "--tag",   help="narrow down from tag")
 
     a_list = sub.add_parser("list", help="list mode arguments:",
         description=textwrap.dedent(f"""\
@@ -63,6 +66,9 @@ def args_parse():
     a_edt.add_argument("-b", "--body",    default=None, help="expand strings")
     a_edt.add_argument("id", help="update target id")
 
+    a_del = sub.add_parser("delete", help="delete")
+    a_del.add_argument("id", help="delete target id")
+
     argcomplete.autocomplete(p)
     return p.parse_args()
 
@@ -81,15 +87,17 @@ def main():
         case "edit":
             ret  = SNIP.update(db, args)
             print(f"UPDATE {ret['id']} : {ret['trigger']} / {ret['body']}")
+        case "delete": SNIP.delete(db, args); print("DELETED")
         case "tui":
             if args.mode in ["preview", "get", "edit", "delete"] and args.id is None:
-                a_tui.error(f"mode: '{args.mode}' requires an ID")
+                logger.error(f"tui mode:{args.mode} requires an ID")
+                return 1
             match args.mode:
                 case "raw":     print(tui.raw(db, args))
                 case "get":     print(tui.get(db, args))
-                case "edit":    print(tui.get(db, args))
-                case "preview": print(tui.get(db, args))
-                case "delete":  print(tui.get(db, args))
+                case "preview": print(tui.preview(db, args))
+                case "edit":    print(tui.get(db, args))    # TODO:
+                case "delete":  SNIP.delete(db, args); print("DELETED")
                 case _: pass
         case "list":
             match args.mode:
