@@ -42,16 +42,16 @@ def rofi_name(db: Database, args):
         """
 
     rows = db.query(query, [tag])
-    rows = [f"{int(row['id']):3d} : {row['trigger']}\t{row['body']}"
-            f"\t{row['memo']}\t{row['tags']}" for row in rows]
+    rows = [f"{row['trigger']}\t / \t{row['body']}"
+            f"\t{row['memo']}\t{row['tags']}\t{int(row['id']):04d}" for row in rows]
 
     try:
-        choice = subprocess.run(["rofi", "-dmenu", "-p", "'Snippets'"], input="\n".join(rows),
+        choice = subprocess.run(C.ROFI, input="\n".join(rows),
                                 stdout=subprocess.PIPE, text=True)
         if choice.returncode != 0:
             return
 
-        target = db[C.TABLE].get(choice.stdout.split()[0])
+        target = db[C.TABLE].get(choice.stdout.split()[-1])
 
         db[C.TABLE].update(target["id"], {"rate": target["rate"] + 1})
         logging.info(target["body"])
@@ -67,8 +67,6 @@ def rofi_name(db: Database, args):
         logging.error("stderr: %s", e.stderr)
 
 
-# TODO: raw実装 snip-fzf.sh
-# https://gemini.google.com/app/ed6a3ad7bd5daf16?hl=ja
 def fzf_select(db: Database, args: Namespace):
     lines = []
 
