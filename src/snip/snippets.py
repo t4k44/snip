@@ -17,6 +17,12 @@ def insert(db: Database, args):
     args.trigger = args.trigger or "memo"
     args.tags = [t for t in args.tags.split(",") if t]
 
+    flag = 0
+    if args.position: flag += 2
+    if args.cursor:   flag += 4
+    if args.abbr or flag != 0: flag += 1
+    args.abbr = flag
+
     with db.conn:
         db[C.TABLE].insert(dict_pickup(vars(args), C.TARGET_FIELD), pk="id", columns={"abbr": int})
         ret = db[C.TABLE].get(db.conn.execute("SELECT last_insert_rowid()").fetchone()[0])
@@ -27,6 +33,13 @@ def insert(db: Database, args):
 def update(db: Database, args):
     with db.conn:
         target = db[C.TABLE].get(args.id)
+
+        flag = 0
+        if args.position: flag += 2
+        if args.cursor:   flag += 4
+        if args.abbr or flag != 0: flag += 1
+        args.abbr = flag
+
         target.update(dict_pickup(vars(args), C.TARGET_FIELD))
         target.update({"tags": [t for t in args.tags.split(",") if t]})
 
@@ -34,6 +47,7 @@ def update(db: Database, args):
         ret = db[C.TABLE].get(args.id)
 
     return ret
+
 
 def delete(db: Database, args):
     with db.conn:

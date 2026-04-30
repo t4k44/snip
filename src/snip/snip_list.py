@@ -63,12 +63,6 @@ def rofi_name(db: Database, args):
         logging.error("stderr: %s", e.stderr)
 
 
-# サブコマンド 役割 出力イメージ
-# snip tui raw     fzf に渡す一覧 ID\tTrigger\tMemo\tTags...
-# snip tui preview <id> プレビュー画面用 Body + --- + Memo (色付き)
-# snip tui get     <id> 確定後の取得 Body のみ出力（ついでに rate を加算）
-# snip tui edit    <id> 編集 指定 ID を一時ファイルで開いて更新
-# snip tui delete  <id> 削除 指定 ID を物理削除
 def fzf_select(db: Database, args: Namespace):
     import os
     import subprocess

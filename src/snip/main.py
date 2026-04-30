@@ -46,14 +46,17 @@ def args_parse():
 
     # add, edit 共通引数
     a_parent = argparse.ArgumentParser(add_help=False)
-    a_parent.add_argument("-t", "--tags",    default="fish", help="tags split ','")
-    a_parent.add_argument("-m", "--memo",    default="",     help="description")
-    a_parent.add_argument("-a", "--abbr",    default=0,      choices=['0','1','3','5','7'],
-                          help="fish abbr  1:ON / 2:Position / 4:SetCursor")
-    a_parent.add_argument("-c", "--fish_cur_mark", default=None,
-                          help="fish abbr cursor mark.")
-    a_parent.add_argument("-M", "--mode",    default=None,   choices=["t", "fmta", "raw"],
+    a_parent.add_argument("-t", "--tags",     default="fish", help="tags split ','")
+    a_parent.add_argument("-m", "--memo",     default="",     help="description")
+    a_parent.add_argument("-C", "--csr_mark", default=None,   help="カーソル位置指定マーク設定")
+    a_parent.add_argument("-M", "--mode",     default=None,   choices=["t", "fmta", "raw"],
                           help="nvim mode  t:ON / fmta:TabStop / raw:raw")
+    a_parent.add_argument("-a", "--abbr",     action="store_true",
+                          help="fish abbr を有効にする")
+    a_parent.add_argument("-p", "--position", action="store_true",
+                          help="Anywhere指定(--position)を有効にする")
+    a_parent.add_argument("-c", "--cursor",   action="store_true",
+                          help="カーソル位置指定(--set-cursor)を有効にする")
 
     # add
     a_add = sub.add_parser("add", parents=[a_parent], help="add mode arguments:")

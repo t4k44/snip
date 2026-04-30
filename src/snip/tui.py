@@ -35,7 +35,6 @@ def __body_clean_ip(row):
 # snip get     <id> 確定後の取得 Body のみ出力（ついでに rate を加算）
 # snip edit    <id> 編集 指定 ID を一時ファイルで開いて更新
 # snip delete  <id> 削除 指定 ID を物理削除
-
 def raw(db: Database, args: Namespace):
     lines = []
     query = f"EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = '{args.tag}')" if args.tag else None
