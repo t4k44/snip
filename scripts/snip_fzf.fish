@@ -7,7 +7,8 @@ function snip_fzf --description "fzf selector for snip"
 
   set -l tag_opt
   test -n "$_flag_tag"; and set tag_opt --tag $_flag_tag
-  set -l selected (snip tui raw $tag_opt | fzf \
+
+  set -l selected (snip tui raw $tag_opt | sk \
     --with-nth=2,3,4 --delimiter='\t' \
     --preview "snip tui preview {1}" \
     --preview-window=right,50%,wrap \

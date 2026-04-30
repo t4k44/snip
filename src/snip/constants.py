@@ -29,7 +29,7 @@ DEFAULTS = {
     # apps
     "rofi":        ["rofi", "-dmenu",   "-p", "Snippets"],
     "rofi_strlen": 40,
-    "fzf":         ["fzf",  "--header", "Snippets"],
+    # "fzf":         ["fzf",  "--header", "Snippets"],
 
     "copy_cmd":  ["copyq", "copy"],
     "paste_cmd": ["copyq", "paste"],
