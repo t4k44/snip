@@ -1,10 +1,10 @@
 import sys
 from typing import List, Optional
 
+import typer
 from pyutils.logger import setup_logger
 from rich import print
 from typing_extensions import Annotated
-import typer
 
 import snip.constants as C
 from snip.utils import get_db
@@ -86,7 +86,7 @@ def delete(id: int):
         ret = db[C.TABLE].get(id)
         db[C.TABLE].delete(id)
 
-        print(f"DELETED:")
+        print("DELETED:")
         print(ret)
 
 

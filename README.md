@@ -67,7 +67,7 @@ snip tui get 123
 
 ```bash
 # Rofiを起動してスニペットを選択し、クリップボードにコピー＆ペースト
-snip gui pop my_tag
+snip gui my_tag
 ```
 
 ## Development
@@ -92,6 +92,9 @@ uv run pytest
 
 # カバレッジを表示
 uv run pytest --cov=src --cov-report=term-missing
+
+# lint check
+uv run ruff check --fix
 ```
 
 テスト環境ではインメモリDBを使用し、実際のファイルやデータベースを書き換えることなく動作を確認できます。

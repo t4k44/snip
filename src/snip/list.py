@@ -17,6 +17,7 @@ logging = setup_logger(__name__)
 @app.command()
 @app.command(name="cs", hidden=True)
 def cheat_sheet(tag: str):
+    """登録済みabbr表示"""
     with get_db() as db:
         table = Table(title=tag)
         # table.add_column("", justify="right", no_wrap=True)
@@ -34,6 +35,7 @@ def cheat_sheet(tag: str):
 
 @app.command()
 def fish():
+    """fish用abbr出力"""
     cmds = []
     with get_db() as db:
         for row in db["snippets"].rows_where("abbr & 1 = 1", select="trigger, body, abbr, fish_cur_mark"):

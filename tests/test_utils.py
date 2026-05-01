@@ -1,5 +1,5 @@
-import pytest
-from snip.utils import body_remove_input_place, AbbrFlag
+from snip.utils import AbbrFlag, body_remove_input_place
+
 
 def test_body_remove_input_place_no_modification():
     row = {"body": "hello world", "abbr": 0}

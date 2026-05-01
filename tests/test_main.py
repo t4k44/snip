@@ -1,6 +1,7 @@
 from typer.testing import CliRunner
-from snip.main import app
+
 from snip import __version__
+from snip.main import app
 
 runner = CliRunner()
 

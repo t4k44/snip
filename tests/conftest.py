@@ -1,8 +1,10 @@
+from contextlib import contextmanager
+
 import pytest
 import sqlite_utils
-from contextlib import contextmanager
+
 from snip import constants as C
-import snip.utils
+
 
 @pytest.fixture
 def db():

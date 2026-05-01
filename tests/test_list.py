@@ -1,6 +1,7 @@
 from typer.testing import CliRunner
-from snip.main import app
+
 import snip.constants as C
+from snip.main import app
 from snip.utils import AbbrFlag
 
 runner = CliRunner()
@@ -17,7 +18,7 @@ def test_fish_abbr_output(init_db, mock_paths):
         "mode": None,
         "fish_cur_mark": None
     }, pk="id")
-    
+
     # Another one with position anywhere
     db[C.TABLE].insert({
         "trigger": "L",
@@ -31,10 +32,10 @@ def test_fish_abbr_output(init_db, mock_paths):
 
     result = runner.invoke(app, ["list", "fish"])
     assert result.exit_code == 0
-    
+
     fish_abbr_file = mock_paths["fish_abbr"]
     assert fish_abbr_file.exists()
-    
+
     content = fish_abbr_file.read_text()
     assert "abbr --add -- g 'git status'" in content
     assert "abbr --add --position anywhere -- L '| less'" in content
@@ -50,10 +51,10 @@ def test_fish_abbr_with_cursor(init_db, mock_paths):
         "memo": "",
         "mode": None
     }, pk="id")
-    
+
     result = runner.invoke(app, ["list", "fish"])
     assert result.exit_code == 0
-    
+
     content = mock_paths["fish_abbr"].read_text()
     # Note: shlex.quote will handle '%' appropriately
     assert "abbr --add --set-cursor=% -- gc 'git commit -m '" in content
@@ -69,7 +70,7 @@ def test_cheat_sheet(init_db):
         "mode": None,
         "fish_cur_mark": None
     }, pk="id")
-    
+
     result = runner.invoke(app, ["list", "cs", "test_tag"])
     assert result.exit_code == 0
     assert "test_trigger" in result.stdout
