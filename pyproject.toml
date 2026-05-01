@@ -13,6 +13,8 @@ dependencies = [
     "pyutils",
     "rich>=14.3.3",
     "sqlite-utils>=3.38",
+    "typer>=0.25.0",
+    "typing-extensions>=4.15.0",
 ]
 
 [project.scripts]

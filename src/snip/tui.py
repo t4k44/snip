@@ -1,33 +1,13 @@
 import json
-import logging
-import re
-import subprocess
-import time
-from argparse import Namespace
 
-from rich.console import Console
-from rich.table import Table
-from sqlite_utils import Database
+import typer
+from pyutils.logger import setup_logger
 
 import snip.constants as C
-from snip.fish_abbr import AbbrFlag
+from snip.utils import body_remove_input_place, get_db
 
-
-def __body_clean_ip(row):
-    """
-    bodyのカーソル位置指定用記号を除去する
-    """
-    # logging.debug("__body_clean_ip: 開始 (target['id']: %s)", row.get("id"))
-    body = row["body"]
-    if row.get("mode"):
-        body = re.sub("<[0-9]>", "", body)
-
-    if row.get("abbr") and AbbrFlag.SET_CURSOR in AbbrFlag(row["abbr"]):
-        mark = row["fish_cur_mark"] or "%"
-        body = body.replace(mark, "")
-
-    return body
-
+app = typer.Typer(help="tui parts")
+logger = setup_logger(__name__)
 
 # サブコマンド 役割 出力イメージ
 # snip list raw     fzf に渡す一覧 ID\tTrigger\tMemo\tTags...
@@ -35,35 +15,47 @@ def __body_clean_ip(row):
 # snip get     <id> 確定後の取得 Body のみ出力（ついでに rate を加算）
 # snip edit    <id> 編集 指定 ID を一時ファイルで開いて更新
 # snip delete  <id> 削除 指定 ID を物理削除
-def raw(db: Database, args: Namespace):
+@app.command()
+def raw(tag: str = typer.Argument("fish")):
     lines = []
-    query = f"EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = '{args.tag}')" if args.tag else None
+    query = f"EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = '{tag}')"
 
-    for row in db[C.TABLE].rows_where(query, order_by="rate DESC, id DESC"):
-        body = __body_clean_ip(row)
-        body = "⏎ ".join(body.splitlines())
-        tags = json.loads(row["tags"])
-        lngm = (tags[0] if tags and tags[0] != "name" else "txt")
-        lngm = "vim" if lngm == "nvim" else lngm
-        lines.append(f'{row["id"]}\t{row["trigger"]}\t{body}\t[tags: {",".join(tags)}]\t{lngm}')
+    with get_db() as db:
+        logger.debug(f"query: {query}")
+        for row in db[C.TABLE].rows_where(query, order_by="rate DESC, id DESC"):
+            body = body_remove_input_place(row)
+            body = "⏎ ".join(body.splitlines())
+            tags = json.loads(row["tags"])
+            lngm = (tags[0] if tags and tags[0] != "name" else "txt")
+            lngm = "vim" if lngm == "nvim" else lngm
 
-    return "\n".join(lines)
+            lines.append(f'{row["id"]}\t{row["trigger"]}\t{body}\t[tags: {",".join(tags)}]\t{lngm}')
 
-def preview(db: Database, args: Namespace):
-    row  = db[C.TABLE].get(args.id)
-    if not row: return ""
+    print("\n".join(lines))
 
-    body  = __body_clean_ip(row)
-    body += "\n---\n"
-    body += row.get("memo", "")
 
-    return body
+@app.command()
+def preview(id: int):
+    logger.debug(f"id: {id}")
+    with get_db() as db:
+        row  = db[C.TABLE].get(id)
+        if not row: return ""
 
-def get(db: Database, args: Namespace):
-    row  = db[C.TABLE].get(args.id)
-    body = ""
-    if row:
-        db[C.TABLE].update(row["id"], {"rate": row["rate"] + 1})
-        body = __body_clean_ip(row)
+        body  = body_remove_input_place(row)
+        body += "\n---\n"
+        body += row.get("memo", "")
 
-    return body
+    print(body)
+
+
+@app.command()
+def get(id: int):
+    logger.debug(f"id: {id}")
+    with get_db() as db:
+        row  = db[C.TABLE].get(id)
+        body = ""
+        if row:
+            db[C.TABLE].update(row["id"], {"rate": row["rate"] + 1})
+            body = body_remove_input_place(row)
+
+    print(body)

@@ -1,118 +1,46 @@
-#!/usr/bin/env python3
 
-import argparse
-import sys
-import textwrap
-
-import argcomplete
-from sqlite_utils import Database
+import typer
 from pyutils.logger import setup_logger
 
 import snip.constants as C
-import snip.snippets as SNIP
-from snip import fish_abbr, nvim, skk, tui
-from snip.snip_list import cheat_sheet, fzf_select, rofi_name
+from snip.gui import app as gui_app  # 別ファイルのTyper
+from snip.list import app as list_app
+from snip.snippets import app as snip_app
+from snip.tui import app as tui_app
 
 from . import __version__
 
-
 logger = setup_logger(__name__)
+app = typer.Typer(help="snippet管理tool",
+                  context_settings={"help_option_names": ["-h", "--help"]})
 
-def args_parse():
-    p = argparse.ArgumentParser(description='snippet管理tool')
-    p.add_argument("--version", action="version", version=f"%(prog)s {__version__}",
-                   help="バージョン表示")
-
-    sub = p.add_subparsers(dest="cmd", required=True, description="主要コマンド")
-
-    a_tui  = sub.add_parser("tui",  help="tui")
-    a_tui.add_argument("mode", choices=["raw", "get", "preview", "edit", "delete"])
-    a_tui.add_argument("id", nargs="?", help="対象ID")
-    a_tui.add_argument("-t", "--tag",   help="narrow down from tag")
-
-    a_list = sub.add_parser("list", help="list mode arguments:",
-        description=textwrap.dedent(f"""\
-        list mode:
-          fzf         : commandline fzf selector `commandline -i (snip list fzf)` で呼び出し
-          rofi        : launch rofi and snip to clipboard and paste
-          fish        : output fish abbr          (path: {C.FISH_ABBR})
-          nvim        : output luasnippets list   (path: {C.NVIM_SNIP})
-          skk         : output skk abbr           (path: {C.SKK_ABBR})
-          cheat_sheet : output cheat sheet
-        """),
-        formatter_class=argparse.RawTextHelpFormatter)
-    a_list.add_argument("-t", "--tag", help="narrow down from tag")
-    a_list.add_argument("mode", choices=["fzf", "rofi", "fish", "nvim", "skk", "cheat_sheet"])
-
-    # add, edit 共通引数
-    a_parent = argparse.ArgumentParser(add_help=False)
-    a_parent.add_argument("-t", "--tags",     default="fish", help="tags split ','")
-    a_parent.add_argument("-m", "--memo",     default="",     help="description")
-    a_parent.add_argument("-C", "--csr_mark", default=None,   help="カーソル位置指定マーク設定")
-    a_parent.add_argument("-M", "--mode",     default=None,   choices=["t", "fmta", "raw"],
-                          help="nvim mode  t:ON / fmta:TabStop / raw:raw")
-    a_parent.add_argument("-a", "--abbr",     action="store_true",
-                          help="fish abbr を有効にする")
-    a_parent.add_argument("-p", "--position", action="store_true",
-                          help="Anywhere指定(--position)を有効にする")
-    a_parent.add_argument("-c", "--cursor",   action="store_true",
-                          help="カーソル位置指定(--set-cursor)を有効にする")
-
-    # add
-    a_add = sub.add_parser("add", parents=[a_parent], help="add mode arguments:")
-    a_add.add_argument("trigger", help="snippet trigger string")
-    a_add.add_argument("body",    nargs='*', help="expand strings")
-
-    # edit
-    a_edt = sub.add_parser("edit", parents=[a_parent],  help="edit mode arguments:")
-    a_edt.add_argument("-T", "--trigger", default=None, help="snippet trigger string")
-    a_edt.add_argument("-b", "--body",    default=None, help="expand strings")
-    a_edt.add_argument("id", help="update target id")
-
-    a_del = sub.add_parser("delete", help="delete")
-    a_del.add_argument("id", help="delete target id")
-
-    argcomplete.autocomplete(p)
-    return p.parse_args()
+app.add_typer(snip_app)
+app.add_typer(tui_app, name="tui")
+app.add_typer(gui_app, name="gui")
+app.add_typer(list_app, name="list")
+app.add_typer(list_app, name="l", hidden=True)
 
 
-def main():
-    args = args_parse()
+def version_callback(value: bool):
+    if value:
+        print(f"snip {__version__}")
+        raise typer.Exit()
 
+
+@app.callback(invoke_without_command=True)
+def callback(ctx: typer.Context,
+             version: bool | None = typer.Option(None, "--version", "-v", callback=version_callback,
+                                                    is_eager=True, help="Display version information")
+             ):
+    """
+    コマンドが指定されていない場合に実行
+    """
+    logger.debug(f"subcommand: {ctx.invoked_subcommand}")
     C.DB_PATH.mkdir(parents=True, exist_ok=True)
-    db = Database(str(C.DB_FILE))
-
-    match args.cmd:
-        case "add":
-            args.body = sys.stdin.read() if not sys.stdin.isatty() else (" ".join(args.body) or "")
-            ret       = SNIP.insert(db, args)
-            print(f"DONE {ret['id']} : {ret['trigger']} / {ret['body']}")
-        case "edit":
-            ret  = SNIP.update(db, args)
-            print(f"UPDATE {ret['id']} : {ret['trigger']} / {ret['body']}")
-        case "delete": SNIP.delete(db, args); print("DELETED")
-        case "tui":
-            if args.mode in ["preview", "get", "edit", "delete"] and args.id is None:
-                logger.error(f"tui mode:{args.mode} requires an ID")
-                return 1
-            match args.mode:
-                case "raw":     print(tui.raw(db, args))
-                case "get":     print(tui.get(db, args))
-                case "preview": print(tui.preview(db, args))
-                case "edit":    print(tui.get(db, args))    # TODO:
-                case "delete":  SNIP.delete(db, args); print("DELETED")
-                case _: pass
-        case "list":
-            match args.mode:
-                case "fzf":  print(fzf_select(db, args))
-                case "rofi": rofi_name(db, args)
-                case "fish": fish_abbr.output(db)
-                case "nvim": nvim.output(db)
-                case "skk":  skk.output(db)
-                case "cheat_sheet":  cheat_sheet(db, args)
-                case _: pass
-        case _: pass
+    if ctx.invoked_subcommand is None:
+        ctx.get_help()
+        raise typer.Exit()
 
 
-if __name__ == "__main__":
-    main()
+def main(): app()
+if __name__ == "__main__": main()
