@@ -9,14 +9,9 @@ from snip.utils import body_remove_input_place, get_db
 app = typer.Typer(help="tui parts")
 logger = setup_logger(__name__)
 
-# サブコマンド 役割 出力イメージ
-# snip list raw     fzf に渡す一覧 ID\tTrigger\tMemo\tTags...
-# snip preview <id> プレビュー画面用 Body + --- + Memo (色付き)
-# snip get     <id> 確定後の取得 Body のみ出力（ついでに rate を加算）
-# snip edit    <id> 編集 指定 ID を一時ファイルで開いて更新
-# snip delete  <id> 削除 指定 ID を物理削除
 @app.command()
-def raw(tag: str = typer.Argument("fish")):
+def list(tag: str = typer.Argument("fish")):
+    """fzfに渡すためのタブ区切り一覧を出力"""
     lines = []
     query = f"EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = '{tag}')"
 
@@ -36,6 +31,7 @@ def raw(tag: str = typer.Argument("fish")):
 
 @app.command()
 def preview(id: int):
+    """指定IDのスニペットのプレビューを表示"""
     logger.debug(f"id: {id}")
     with get_db() as db:
         row  = db[C.TABLE].get(id)
@@ -44,6 +40,8 @@ def preview(id: int):
         body  = body_remove_input_place(row)
         body += "\n---\n"
         body += row.get("memo", "")
+        body += "\n---\n"
+        body += f"{row.get("tags", "")} (id: {row.get("id")})"
 
     print(body)
 
@@ -59,3 +57,10 @@ def get(id: int):
             body = body_remove_input_place(row)
 
     print(body)
+
+
+# TODO: snip edit <id>
+# 編集 指定 ID を一時ファイルで開いて更新
+@app.command()
+def edit(id: int):
+    pass

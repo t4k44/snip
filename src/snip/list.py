@@ -1,11 +1,13 @@
 import re
 import shlex
 import sys
+from enum import IntFlag
 
 import typer
 from pyutils.logger import setup_logger
 from rich.console import Console
 from rich.table import Table
+from sqlite_utils import Database
 
 import snip.constants as C
 from snip.utils import AbbrFlag, get_db
@@ -20,14 +22,12 @@ def cheat_sheet(tag: str):
     """登録済みabbr表示"""
     with get_db() as db:
         table = Table(title=tag)
-        # table.add_column("", justify="right", no_wrap=True)
         table.add_column("abbr")
         table.add_column("cmd")
         table.add_column("memo")
 
         query = "EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = ?)"
-        for row in db[C.TABLE].rows_where(query, [tag], order_by="trigger",
-                                          select="id, trigger, body, tags, memo"):
+        for row in db[C.TABLE].rows_where(query, [tag], order_by="trigger", select="trigger, body, memo"):
             table.add_row(row["trigger"], row["body"], row["memo"])
 
     Console().print(table)
@@ -53,8 +53,7 @@ def fish():
                         parts += ["--set-cursor"]
 
                 parts += ["--", row["trigger"], re.sub("<[0-9]>", "", row["body"])]
-                # 各引数をシェル安全にクォートして連結
-                cmds.append(" ".join(shlex.quote(p) for p in parts))
+                cmds.append(" ".join(shlex.quote(p) for p in parts)) # 各引数をシェル安全にクォートして連結
 
         if not cmds:
             print("登録対象なし")
@@ -72,89 +71,60 @@ def fish():
     return 0
 
 
-# TODO: case "nvim": nvim.output(db)
-# TODO: case "skk":  skk.output(db)
+@app.command()
+def skk(db):
+    """SKKの辞書形式でスニペットを自動生成"""
+    abbr = []
+    with get_db() as db:
+        rows = db[C.TABLE].rows_where(
+            "EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = ?)", ['skk'])
+        for row in rows:
+            body  = row["body"].replace("%", "")
+            abbr.append(f"{row['trigger']} /{body}/\n")
 
-# from enum import IntFlag
-#
-# from sqlite_utils import Database
-#
-# import snip.constants as C
-#
-#
-# def init(db):
-#     tags = [
-#         {"name":"all"},{"name":"gitcommit"},{"name":"python"},
-#         {"name":"sh"},{"name":"sql"},{"name":"text"}
-#     ]
-#     db[C.TAG_TABLE].insert_all(tags, pk="id", columns={"abbr": int})
-#
-#
-# def rows_from_tag(db: Database, tag: str):
-#     rows = db[C.TABLE].rows_where(
-#         "EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = ?)", [tag])
-#
-#     return rows
-#
-#
-# def output(db):
-#     abbr = []
-#     for row in rows_from_tag(db, 'skk'):
-#         body  = row["body"].replace("%", "")
-#         abbr.append(f"{row['trigger']} /{body}/\n")
-#
-#     file = open(C.SKK_ABBR, "w", encoding="UTF-8")
-#     file.write(";; okuri-ari entries.\n")
-#     file.write(";; okuri-nasi entries.\n")
-#     file.writelines(abbr)
-#     file.close()
+    file = open(C.SKK_ABBR, "w", encoding="UTF-8")
+    file.write(";; okuri-ari entries.\n")
+    file.write(";; okuri-nasi entries.\n")
+    file.writelines(abbr)
+    file.close()
 
 
-# import re
-# from enum import IntFlag
-#
-# import snip.constants as C
-#
-#
-# class AbbrFlag(IntFlag):
-#     SIMPLE            = 1
-#     POSITION_ANYWHERE = 2
-#     SET_CURSOR        = 4
-#
-#
-# def init(db):
-#     tags = [
-#         {"name":"all"},{"name":"gitcommit"},{"name":"python"},
-#         {"name":"sh"},{"name":"sql"},{"name":"text"}
-#     ]
-#     db[C.TAG_TABLE].insert_all(tags, pk="id", columns={"abbr": int})
-#
-#
-# def output(db):
-#     for t in db[C.TAG_TABLE].rows:
-#         tag = t["name"]
-#         rows = db[C.TABLE].rows_where(
-#             "EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = ?)"
-#             "AND mode IS NOT NULL", [tag])
-#
-#         snip = []
-#         for row in rows:
-#             match row["mode"]:
-#                 case "fmta":
-#                     body  = row["body"].replace("%", "")
-#                     maxn  = [int(m) for m in re.findall(r"<(\d+)>", body)]
-#                     nodes = ", ".join([f"i({n})" for n in maxn])
-#                     snip.append(f"  s(\"{row['trigger']}\", fmta([[{body}]], {{ {nodes} }})),\n")
-#                 case "raw":
-#                     snip.append(f"  s(\"{row['trigger']}\", {{{row['body']}}}),\n")
-#                 case "t":
-#                     body = row['body'].replace("\"", "\\\"").replace("\n", "\",\"")
-#                     snip.append(f"  s(\"{row['trigger']}\", t(\"{body}\")),\n")
-#
-#         file_name = C.NVIM_SNIP / f"{tag}.lua"
-#         file = open(file_name, "w", encoding="UTF-8")
-#         file.write("local fmta = require(\"luasnip.extras.fmt\").fmta\n")
-#         file.write("return {\n")
-#         file.writelines(snip)
-#         file.write("}")
-#         file.close()
+def init_nvim(db):
+    tags = [
+        {"name":"all"},{"name":"gitcommit"},{"name":"python"},
+        {"name":"sh"},{"name":"sql"},{"name":"text"}
+    ]
+    db[C.TAG_TABLE].insert_all(tags, pk="id", columns={"abbr": int})
+
+
+@app.command()
+def nvim():
+    """NeovimのLuaSnip形式でスニペットを自動生成"""
+    with get_db() as db:
+        for t in db[C.TAG_TABLE].rows:
+            tag = t["name"]
+            rows = db[C.TABLE].rows_where(
+                "EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = ?)"
+                "AND mode IS NOT NULL", [tag])
+
+            snip = []
+            for row in rows:
+                match row["mode"]:
+                    case "fmta":
+                        body  = row["body"].replace("%", "")
+                        maxn  = [int(m) for m in re.findall(r"<(\d+)>", body)]
+                        nodes = ", ".join([f"i({n})" for n in maxn])
+                        snip.append(f"  s(\"{row['trigger']}\", fmta([[{body}]], {{ {nodes} }})),\n")
+                    case "raw":
+                        snip.append(f"  s(\"{row['trigger']}\", {{{row['body']}}}),\n")
+                    case "t":
+                        body = row['body'].replace("\"", "\\\"").replace("\n", "\",\"")
+                        snip.append(f"  s(\"{row['trigger']}\", t(\"{body}\")),\n")
+
+            file_name = C.NVIM_SNIP / f"{tag}.lua"
+            file = open(file_name, "w", encoding="UTF-8")
+            file.write("local fmta = require(\"luasnip.extras.fmt\").fmta\n")
+            file.write("return {\n")
+            file.writelines(snip)
+            file.write("}")
+            file.close()

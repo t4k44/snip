@@ -6,8 +6,9 @@
 
 - **スニペットの追加・編集**: コマンドラインから簡単にスニペットを追加・更新できます。
 - **FZF連携**: `fzf`を使ってインタラクティブにスニペットを検索し、選択したスニペットを標準出力に展開します。
-- **Rofi連携**: `rofi`を使ってスニペットを選択し、クリップボードにコピー＆ペーストします。
-- **Fish abbr連携**: Fish shellのabbr（略語）としてスニペットを自動生成します。
+    - [ ] scripts/snip_fzf.fish の説明
+- **Rofi連携**: `rofi`を使ってスニペットを選択し、クリップボード経由でコピー＆ペーストします。
+- **fish abbr連携**: fish shellのabbr（略語）としてスニペットを自動生成します。
 - **Neovim (LuaSnip)連携**: NeovimのLuaSnip形式でスニペットを自動生成します。
 - **SKK連携**: SKKの辞書形式でスニペットを自動生成します。
 - **SQLiteデータベース**: スニペットはSQLiteデータベースで管理されます。
@@ -38,13 +39,13 @@ snip delete 123
 
 ### `list` コマンド
 
-スニペットを一覧表示したり、Fish abbrを生成したりします。
+スニペットを一覧表示したり、fish abbrを生成したりします。
 
 ```bash
 # 指定したタグのチートシートを表示
 snip list cheat-sheet my_tag    # 短縮形 cs
 
-# Fish shell の略語 (abbr) ファイルを生成
+# fish shell の略語 (abbr) ファイルを生成
 snip list fish
 ```
 
@@ -54,7 +55,7 @@ TUIセレクタ（`fzf`や`sk`）から呼び出すための低レベルコマ�
 
 ```bash
 # fzfに渡すためのタブ区切り一覧を出力
-snip tui raw fish
+snip tui list TAG
 
 # 指定IDのスニペットのプレビューを表示
 snip tui preview 123
@@ -101,4 +102,4 @@ uv run ruff check --fix
 
 ## License
 
-[LICENSE](LICENSE) (もしあれば)
+[LICENSE](LICENSE)
