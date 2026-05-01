@@ -22,100 +22,79 @@ uv tool install .
 
 ## Usage
 
-### コマンドライン引数
+### `snip` (基本コマンド)
 
-```
-usage: snip [-h] [--version] {list,add,edit} ...
+```bash
+# スニペットの追加 (引数または標準入力)
+snip add trigger_name "body content" -t tag1,tag2 -m "memo"
+echo "multiline body" | snip add trigger_name -t tag1
+
+# スニペットの編集 (ID指定)
+snip edit 123 --body "new body" --tags new_tag
+
+# スニペットの削除
+snip delete 123
 ```
 
 ### `list` コマンド
 
-スニペットを一覧表示したり、各種ツール向けに出力します。
+スニペットを一覧表示したり、Fish abbrを生成したりします。
 
-```
-list mode:
-  fzf   : commandline fzf selector `commandline -i (snip list fzf)` で呼び出し
-  rofi  : launch rofi and snip to clipboard and paste
-  fish  : output fish abbr          (path: ~/.config/fish/abbr.fish)
-  nvim  : output luasnippets list   (path: ~/.config/nvim/luasnippets)
-  skk   : output skk abbr           (path: ~/.config/ibus-skk/abbr.dict)
-```
-
-- `-t`, `--tag`: タグで絞り込みます。
-- `mode`: `fzf`, `rofi`, `fish`, `nvim`, `skk` のいずれかを指定します。
-
-例:
 ```bash
-# fzfでスニペットを選択
-commandline -i (snip list fzf)
+# 指定したタグのチートシートを表示
+snip list cheat-sheet my_tag    # 短縮形 cs
 
-# rofiでスニペットを選択し、クリップボードにペースト
-snip list rofi
-
-# fish abbrファイルを生成
+# Fish shell の略語 (abbr) ファイルを生成
 snip list fish
-
-# nvim luasnippetsファイルを生成
-snip list nvim
-
-# skk abbr辞書ファイルを生成
-snip list skk
 ```
 
-### `add` コマンド
+### `tui` コマンド (fzf/sk等との連携用)
 
-新しいスニペットを追加します。
+TUIセレクタ（`fzf`や`sk`）から呼び出すための低レベルコマンドです。
 
-- `-t`, `--tags`: カンマ区切りのタグ（例: `python,cli`）。デフォルトは `fish`。
-- `-m`, `--memo`: スニペットの説明。
-- `-a`, `--abbr`: fish abbrのオプション。`1:ON / 2:Position / 4:SetCursor` の組み合わせ。
-- `-c`, `--fish_cur_mark`: fish abbrのカーソル位置指定マーク。
-- `-M`, `--mode`: nvimのモード。`t` (テキスト), `fmta` (タブストップ), `raw` (生)。
-- `trigger`: スニペットのトリガー文字列。
-- `body`: 展開される文字列。標準入力からも受け付けます。
-
-例:
 ```bash
-# 簡単なスニペットを追加
-snip add my_snippet "Hello, world!" -t text -m "挨拶"
+# fzfに渡すためのタブ区切り一覧を出力
+snip tui raw fish
 
-# 複数行のスニペットを標準入力から追加
-echo "def func():\n    print('hello')" | snip add py_func -t python -m "Python関数"
+# 指定IDのスニペットのプレビューを表示
+snip tui preview 123
 
-# fish abbrとして追加
-snip add -a 1 -c "%" fish_hello "echo Hello, %world!"
+# 指定IDのスニペット本文を取得（使用回数カウントアップ）
+snip tui get 123
 ```
 
-### `edit` コマンド
+### `gui` コマンド
 
-<!-- TODO: 共通opt無い？ -->
-既存のスニペットを編集します。
-
-- `-T`, `--trigger`: スニペットのトリガー文字列。
-- `-b`, `--body`: 展開される文字列。
-- `id`: 更新対象のスニペットID。
-- その他のオプションは `add` コマンドと同様です。
-
-例:
 ```bash
-# ID 123のスニペットのbodyを更新
-snip edit 123 -b "Updated body content"
-
-# ID 456のスニペットのタグを更新
-snip edit 456 -t "python,new_tag"
+# Rofiを起動してスニペットを選択し、クリップボードにコピー＆ペースト
+snip gui pop my_tag
 ```
 
 ## Development
 
 ### ファイル構成
 
-- `src/snip/main.py`: メインのCLIエントリポイント。引数解析とコマンドディスパッチを行います。
-- `src/snip/constants.py`: データベースのテーブル名、ファイルパス、クリップボードコマンドなどの定数を定義します。
-- `src/snip/snippets.py`: スニペットの追加、更新などのデータベース操作を処理します。
-- `src/snip/snip_list.py`: `fzf`と`rofi`を使ったスニペットの選択と表示ロジックを実装します。
-- `src/snip/fish_abbr.py`: Fish shellのabbrファイルを生成します。
-- `src/snip/nvim.py`: NeovimのLuaSnipファイルを生成します。
-- `src/snip/skk.py`: SKKのabbr辞書ファイルを生成します。
+- `src/snip/main.py`: CLIのエントリポイント（Typer）。
+- `src/snip/snippets.py`: `add`, `edit`, `delete` コマンドの実装。
+- `src/snip/list.py`: `list cs`, `list fish` コマンドの実装。
+- `src/snip/tui.py`: `fzf`連携用のサブコマンド群。
+- `src/snip/gui.py`: `rofi`連携用のサブコマンド。
+- `src/snip/utils.py`: 共通のユーティリティ関数。
+- `src/snip/constants.py`: パスやDB構成の定義。
+
+### Testing
+
+`pytest` を使用してテストを実行します。
+
+```bash
+# 全てのテストを実行
+uv run pytest
+
+# カバレッジを表示
+uv run pytest --cov=src --cov-report=term-missing
+```
+
+テスト環境ではインメモリDBを使用し、実際のファイルやデータベースを書き換えることなく動作を確認できます。
 
 ## License
 
