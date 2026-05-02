@@ -60,8 +60,11 @@ snip tui list TAG
 # 指定IDのスニペットのプレビューを表示
 snip tui preview 123
 
-# 指定IDのスニペット本文を取得（使用回数カウントアップ）
+# 指定IDのスニペット本文を取得 (使用回数カウントアップ)
 snip tui get 123
+
+# 指定IDのスニペット本文を編集
+snip tui edit 123
 ```
 
 ### `gui` コマンド

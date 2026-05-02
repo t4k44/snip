@@ -60,10 +60,9 @@ def get(id: int):
     print(body)
 
 
-# TODO: snip tui edit <id>
-# 編集 指定 ID を一時ファイルで開いて更新
 @app.command()
 def edit(id: int):
+    """編集 指定IDを一時ファイルで開いて更新"""
     import os
     import subprocess
     import tempfile
@@ -72,19 +71,28 @@ def edit(id: int):
     with get_db() as db:
         row  = db[C.TABLE].get(id)
 
+        if isinstance(row.get("tags"), str):
+            try:
+                row["tags"] = json.loads(row["tags"])
+            except json.JSONDecodeError:
+                pass # JSON形式でない場合はそのまま
+
         with tempfile.NamedTemporaryFile(mode='w+', suffix='.json', delete=True) as tf:
             json.dump(row, tf, indent=4, ensure_ascii=False)
-            tf.flush() # ディスクに書き込みを確定
+            tf.flush()      # ディスクに書き込みを確定
 
-            # 3. エディタ起動
+            # エディタ起動
             # editor = os.environ.get('EDITOR', 'nvim')
             subprocess.run([C.EDITOR, tf.name])
 
-            # 4. 反映（エディタ終了後）
+            # 反映（エディタ終了後）
             tf.seek(0)
             updated_data = json.load(tf)
 
             if updated_data != row:
+                if "tags" in updated_data and not isinstance(updated_data["tags"], str):
+                    updated_data["tags"] = json.dumps(updated_data["tags"], ensure_ascii=False)
+
                 db[C.TABLE].upsert(updated_data, pk="id")
                 print(f"Snippet {id} updated.")
             else:
