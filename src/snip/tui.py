@@ -9,6 +9,7 @@ from snip.utils import body_remove_input_place, get_db
 app = typer.Typer(help="tui parts")
 logger = setup_logger(__name__)
 
+
 @app.command()
 def list(tag: str = typer.Argument("fish")):
     """fzfに渡すためのタブ区切り一覧を出力"""
@@ -59,8 +60,32 @@ def get(id: int):
     print(body)
 
 
-# TODO: snip edit <id>
+# TODO: snip tui edit <id>
 # 編集 指定 ID を一時ファイルで開いて更新
 @app.command()
 def edit(id: int):
-    pass
+    import os
+    import subprocess
+    import tempfile
+
+    logger.debug(f"id: {id}")
+    with get_db() as db:
+        row  = db[C.TABLE].get(id)
+
+        with tempfile.NamedTemporaryFile(mode='w+', suffix='.json', delete=True) as tf:
+            json.dump(row, tf, indent=4, ensure_ascii=False)
+            tf.flush() # ディスクに書き込みを確定
+
+            # 3. エディタ起動
+            # editor = os.environ.get('EDITOR', 'nvim')
+            subprocess.run([C.EDITOR, tf.name])
+
+            # 4. 反映（エディタ終了後）
+            tf.seek(0)
+            updated_data = json.load(tf)
+
+            if updated_data != row:
+                db[C.TABLE].upsert(updated_data, pk="id")
+                print(f"Snippet {id} updated.")
+            else:
+                print("No changes detected.")

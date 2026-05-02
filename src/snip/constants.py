@@ -27,6 +27,7 @@ DEFAULTS = {
     ],
 
     # apps
+    "editor":      "nvim",
     "rofi":        ["rofi", "-dmenu",   "-p", "Snippets"],
     "rofi_strlen": 40,
     # "fzf":         ["fzf",  "--header", "Snippets"],
@@ -44,6 +45,7 @@ TAG_TABLE      = CONFIG["TAG_TABLE"]
 
 CLIP_COPY_CMD  = CONFIG["COPY_CMD"]
 CLIP_PASTE_CMD = CONFIG["PASTE_CMD"]
+EDITOR         = CONFIG["EDITOR"]
 ROFI           = CONFIG["ROFI"]
 ROFI_STRLEN    = CONFIG["ROFI_STRLEN"]
 
