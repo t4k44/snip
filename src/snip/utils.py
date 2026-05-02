@@ -1,6 +1,5 @@
 import re
 from contextlib import contextmanager
-from enum import IntFlag
 
 from pyutils.db import get_db as get_raw_db
 
@@ -18,6 +17,7 @@ def body_remove_input_place(row):
     """
     bodyのカーソル位置指定用記号を除去する
     """
+    from snip.snippets import AbbrFlag
     body = row["body"]
     if row.get("mode"):
         body = re.sub("<[0-9]>", "", body)

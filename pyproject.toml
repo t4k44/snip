@@ -1,6 +1,6 @@
 [project]
 name        = "snip"
-version     = "0.6.1"
+version     = "0.6.2"
 description = "snippets utils"
 readme      = "README.md"
 authors     = [
@@ -13,6 +13,7 @@ dependencies = [
     "pyutils",
     "rich>=14.3.3",
     "sqlite-utils>=3.38",
+    "textual>=8.2.5",
     "typer>=0.25.0",
     "typing-extensions>=4.15.0",
 ]

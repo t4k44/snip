@@ -2,7 +2,7 @@ from typer.testing import CliRunner
 
 import snip.constants as C
 from snip.main import app
-from snip.utils import AbbrFlag
+from snip.snippets import AbbrFlag
 
 runner = CliRunner()
 

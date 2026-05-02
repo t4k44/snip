@@ -1,4 +1,5 @@
-from snip.utils import AbbrFlag, body_remove_input_place
+from snip.utils import body_remove_input_place
+from snip.snippets import AbbrFlag
 
 
 def test_body_remove_input_place_no_modification():
