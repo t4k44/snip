@@ -15,22 +15,22 @@ class SnippetEditor(Static):
 
     def compose(self) -> ComposeResult:
         with VerticalScroll():
-            yield Label("Trigger")
+            yield Label("[u]T[/u]rigger:")
             yield Input(id="snippet-trigger", value=self.data.get("trigger"))
 
-            yield Label("Body")
+            yield Label("[u]B[/u]ody:")
             yield TextArea(id="snippet-body", text=self.data.get("body"))
 
-            yield Label("Memo:")
+            yield Label("[u]M[/u]emo:")
             yield TextArea(id="snippet-memo", text=self.data.get("memo", ""))
 
-            yield Label("Tags")
             raw_tags = self.data.get("tags")
             try:
                 tags_list = json.loads(raw_tags) if raw_tags else []
                 tags_str = ','.join(tags_list)
             except (json.JSONDecodeError, TypeError):
                 tags_str = ""
+            yield Label("Ta[u]g[/u]s:")
             yield Input(id="snippet-tags", value=tags_str, placeholder="タグをカンマ区切りで入力")
 
             abbr = self.data.get("abbr")
@@ -39,8 +39,21 @@ class SnippetEditor(Static):
                 ("Position Anywhere", 2, bool(abbr & 2)),
                 ("Set Cursor",        4, bool(abbr & 4)),
             ]
-            yield Label("Abbr:")
+            yield Label("[u]A[/u]bbr:")
             yield SelectionList(*selection, id="snippet-abbr")
+
+    BINDINGS = [
+        ("alt+t", "focus_trig"),
+        ("alt+b", "focus_body"),
+        ("alt+m", "focus_memo"),
+        ("alt+g", "focus_tags"),
+        ("alt+a", "focus_abbr"),
+    ]
+    def action_focus_trig(self) -> None: self.query_one("#snippet-trigger").focus()
+    def action_focus_body(self) -> None: self.query_one("#snippet-body").focus()
+    def action_focus_memo(self) -> None: self.query_one("#snippet-memo").focus()
+    def action_focus_tags(self) -> None: self.query_one("#snippet-tags").focus()
+    def action_focus_abbr(self) -> None: self.query_one("#snippet-abbr").focus()
 
 
 class SnippetApp(App):
