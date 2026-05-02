@@ -43,10 +43,20 @@ def test_fish_abbr_output(init_db, mock_paths):
 def test_fish_abbr_with_cursor(init_db, mock_paths):
     db = init_db
     db[C.TABLE].insert({
+        "trigger": "gcd",
+        "body": "git commit -m '%%'",
+        "abbr": (AbbrFlag.SIMPLE | AbbrFlag.SET_CURSOR).value,
+        "fish_cur_mark": "%%",
+        "tags": ["git"],
+        "memo": "",
+        "mode": None
+    }, pk="id")
+
+    db[C.TABLE].insert({
         "trigger": "gc",
         "body": "git commit -m '%'",
         "abbr": (AbbrFlag.SIMPLE | AbbrFlag.SET_CURSOR).value,
-        "fish_cur_mark": "%",
+        "fish_cur_mark": None,
         "tags": ["git"],
         "memo": "",
         "mode": None
@@ -57,7 +67,8 @@ def test_fish_abbr_with_cursor(init_db, mock_paths):
 
     content = mock_paths["fish_abbr"].read_text()
     # Note: shlex.quote will handle '%' appropriately
-    assert "abbr --add --set-cursor=% -- gc 'git commit -m '" in content
+    assert "abbr --add --set-cursor=%% -- gcd 'git commit -m '" in content
+    assert "abbr --add --set-cursor -- gc 'git commit -m '"     in content
 
 def test_cheat_sheet(init_db):
     db = init_db

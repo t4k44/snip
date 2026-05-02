@@ -26,6 +26,12 @@ Pos  = Annotated[bool, typer.Option("--position", "-p", help="fish abbr Anywhere
 Csr  = Annotated[bool, typer.Option("--cursor",   "-c", help="fish abbr カーソル位置指定を有効")]
 
 
+class AbbrFlag(IntFlag):
+    SIMPLE            = 1
+    POSITION_ANYWHERE = 2
+    SET_CURSOR        = 4
+
+
 @app.command()
 @app.command(name="a", hidden=True)
 def add(

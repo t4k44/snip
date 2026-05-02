@@ -6,7 +6,7 @@ from pyutils.logger import setup_logger
 import snip.constants as C
 from snip.utils import body_remove_input_place, get_db
 
-app = typer.Typer(help="tui parts")
+app = typer.Typer(help="tui用低レベルコマンド")
 logger = setup_logger(__name__)
 
 

@@ -6,7 +6,7 @@ from pyutils.logger import setup_logger
 import snip.constants as C
 from snip.utils import body_remove_input_place, get_db
 
-app = typer.Typer(help="gui")
+app = typer.Typer(help="Rofi等を起動し、スニペットを選択＆ペースト")
 logging = setup_logger(__name__)
 
 @app.command()

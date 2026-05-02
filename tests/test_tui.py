@@ -18,7 +18,7 @@ def test_tui_raw(init_db):
         "fish_cur_mark": None
     }, pk="id")
 
-    result = runner.invoke(app, ["tui", "raw", "test"])
+    result = runner.invoke(app, ["tui", "list", "test"])
     assert result.exit_code == 0
     assert "t1" in result.stdout
     assert "b1" in result.stdout

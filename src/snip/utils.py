@@ -7,12 +7,6 @@ from pyutils.db import get_db as get_raw_db
 import snip.constants as C
 
 
-class AbbrFlag(IntFlag):
-    SIMPLE            = 1
-    POSITION_ANYWHERE = 2
-    SET_CURSOR        = 4
-
-
 @contextmanager
 def get_db():
     """DB_PATHを固定してsqlite_utilsの接続を取得するラップ関数"""

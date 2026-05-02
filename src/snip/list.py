@@ -10,9 +10,10 @@ from rich.table import Table
 from sqlite_utils import Database
 
 import snip.constants as C
-from snip.utils import AbbrFlag, get_db
+from snip.snippets import AbbrFlag
+from snip.utils import get_db
 
-app = typer.Typer(help="listing")
+app = typer.Typer(help="(l) スニペットの一覧表示、各種アプリケーション用ファイル出力")
 logging = setup_logger(__name__)
 
 
@@ -89,7 +90,7 @@ def skk(db):
     file.close()
 
 
-def init_nvim(db):
+def init_nvim_tag(db):
     tags = [
         {"name":"all"},{"name":"gitcommit"},{"name":"python"},
         {"name":"sh"},{"name":"sql"},{"name":"text"}
