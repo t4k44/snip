@@ -1,17 +1,20 @@
 import json
 
-from textual.app import ComposeResult, App, ComposeResult
-from textual.containers import VerticalScroll, Horizontal, Vertical
-from textual.widgets import Button, Footer, Header, Input, TextArea, Label, SelectionList, Static
+from pyutils.logger import setup_logger
+from textual.app import App, ComposeResult
+from textual.containers import Horizontal, Vertical, VerticalScroll
+from textual.widgets import Button, Footer, Header, Input, Label, SelectionList, Static, TextArea
 
 import snip.constants as C
 from snip.utils import get_db
+
+logging = setup_logger(__name__)
 
 class SnippetEditor(Static):
     def __init__(self, data, **kwargs):
         super().__init__(**kwargs)
         self.data = data
-        self.log(f"[DEBUG] SnippetEditor.__init__: initial_data={self.data}")
+        logging.debug(f"SnippetEditor.__init__: initial_data={self.data}")
 
     def compose(self) -> ComposeResult:
         with VerticalScroll():
@@ -58,21 +61,9 @@ class SnippetEditor(Static):
 
 class SnippetApp(App):
     CSS = """
-    SnippetEditor {
-        height: 1fr;
-        width: 100%;
-    }
-
-    #button-container {
-        height: 3;
-        width: 100%;
-        align: center middle;
-        background: $panel;
-    }
-
-    Button {
-        margin: 0 1;
-    }
+        SnippetEditor     { height: 1fr; width: 100%; }
+        #button-container { height: 3; width: 100%; align: center middle; background: $panel; }
+        Button            { margin: 0 1; }
     """
 
     def __init__(self, id, **kwargs):
@@ -98,11 +89,11 @@ class SnippetApp(App):
 
     def on_mount(self) -> None:
         """マウント時に実行される処理"""
-        print(f"[DEBUG] App mounted. Setting focus to #snippet-trigger")
+        logging.debug("App mounted. Setting focus to #snippet-trigger")
         try:
             self.query_one("#snippet-body").focus()
         except Exception as e:
-            print(f"[DEBUG] Focus error: {e}")
+            print(f"Focus error: {e}")
 
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -118,7 +109,7 @@ class SnippetApp(App):
                 "tags":    tags_list,
                 "abbr":    sum(self.query_one("#snippet-abbr", SelectionList).selected),
             }
-            self.log(f"[DEBUG] save-btn pressed. data={updated_data}")
+            logging.debug(f"save-btn pressed. data={updated_data}")
 
             with get_db() as db:
                 db[C.TABLE].upsert(updated_data, pk="id")
@@ -132,5 +123,6 @@ class SnippetApp(App):
             self.exit()
 
 if __name__ == "__main__":
-    app = SnippetApp(65)
+    import sys
+    app = SnippetApp(sys.argv[1])
     app.run()

@@ -1,13 +1,11 @@
 import re
 import shlex
 import sys
-from enum import IntFlag
 
 import typer
 from pyutils.logger import setup_logger
 from rich.console import Console
 from rich.table import Table
-from sqlite_utils import Database
 
 import snip.constants as C
 from snip.snippets import AbbrFlag

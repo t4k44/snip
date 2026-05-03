@@ -31,9 +31,7 @@ def callback(ctx: typer.Context,
              version: bool | None = typer.Option(None, "--version", "-v", callback=version_callback,
                                                  is_eager=True, help="Display version information")
 ):
-    """
-    コマンドが指定されていない場合に実行
-    """
+    """コマンドが指定されていない場合に実行"""
     logger.debug(f"subcommand: {ctx.invoked_subcommand}")
     C.DB_PATH.mkdir(parents=True, exist_ok=True)
     if ctx.invoked_subcommand is None:

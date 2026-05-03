@@ -1,6 +1,6 @@
 import sys
-from typing import List, Optional
 from enum import IntFlag
+from typing import List, Optional
 
 import typer
 from pyutils.logger import setup_logger
@@ -64,12 +64,12 @@ def edit(
     id: int,
     trigger: Annotated[Optional[str], typer.Option("--trigger", "-T")] = None,
     body: Annotated[Optional[str],    typer.Option("--body", "-b")] = None,
-    tags: CommonTags = "fish",
-    memo: CommonMemo = "",
+    tags: CommonTags = None,
+    memo: CommonMemo = None,
     mode: CommonMode = None,
-    f_abbr:     Abbr = False,
-    f_position: Pos  = False,
-    f_cursor:   Csr  = False,
+    f_abbr:     Abbr = None,
+    f_position: Pos  = None,
+    f_cursor:   Csr  = None,
     fish_cur_mark: CommonMark = None,
 ):
     """(e) 既存のスニペットを編集"""
@@ -77,11 +77,12 @@ def edit(
 
     with get_db() as db:
         params = __build_params(locals())
-        logger.debug(f"calling SNIP.insert | params: {params}")
+        logger.debug(f"calling SNIP.edit | params: {params}")
 
         params["id"] = id
         db[C.TABLE].upsert(params, pk="id")
         ret = db[C.TABLE].get(id)
+        logger.debug(f"calling SNIP.edit | record: {ret}")
         print(f"UPDATE {ret['id']} : {ret['trigger']}")
 
 
@@ -112,12 +113,15 @@ def __build_params(local_vars: dict):
     elif local_vars.get("body"):
         params["body"] = " ".join(local_vars.get("body", [])) or ""
 
-    params["tags"] = [t for t in local_vars.get("tags").split(",") if t]
+    if tags := local_vars.get("tags"):
+        params["tags"] = [t for t in tags.split(",") if t]
 
-    flag = 0
-    if local_vars.get("f_position"):          flag += 2
-    if local_vars.get("f_cursor"):            flag += 4
-    if local_vars.get("f_abbr") or flag != 0: flag += 1
-    params["abbr"] = flag
+    flags = [local_vars.get(k) for k in ["f_abbr", "f_position", "f_cursor"]]
+    if any(f is not None for f in flags):
+        flag = 0
+        if local_vars.get("f_position"):          flag += 2
+        if local_vars.get("f_cursor"):            flag += 4
+        if local_vars.get("f_abbr") or flag != 0: flag += 1
+        params["abbr"] = flag
 
     return params
