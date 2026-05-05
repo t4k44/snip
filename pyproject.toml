@@ -18,6 +18,10 @@ dependencies = [
     "typing-extensions>=4.15.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/t4k44/snip"
+Issues   = "https://github.com/t4k44/snip/issues"
+
 [project.scripts]
 snip = "snip.main:main"
 
