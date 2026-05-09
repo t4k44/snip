@@ -79,8 +79,8 @@ class SnippetApp(App):
         with Vertical():
             yield SnippetEditor(row)
             yield Horizontal(
-                Button("キャンセル", variant="error", id="cancel-btn"),
-                Button("保存", variant="success", id="save-btn"),
+                Button("(C)キャンセル", variant="error", id="cancel-btn"),
+                Button("(S)保存", variant="success", id="save-btn"),
                 id="button-container"
         )
 
@@ -121,6 +121,12 @@ class SnippetApp(App):
         if event.button.id == "cancel-btn":
             self.notify("キャンセルしました")
             self.exit()
+
+    BINDINGS = [
+        ("alt+c", "focus_cncl"), ("alt+s", "focus_save"),
+    ]
+    def action_focus_cncl(self) -> None: self.query_one("#cancel-btn").press()
+    def action_focus_save(self) -> None: self.query_one("#save-btn").press()
 
 if __name__ == "__main__":
     import sys
