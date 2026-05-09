@@ -36,14 +36,14 @@ class AbbrFlag(IntFlag):
 @app.command()
 @app.command(name="a", hidden=True)
 def add(
-    trigger: str,
-    body: List[str],
-    tags: CommonTags = "fish",
-    memo: CommonMemo = "",
-    mode: CommonMode = None,
-    f_abbr:     Abbr = False,
-    f_position: Pos  = False,
-    f_cursor:   Csr  = False,
+    trigger:       str,
+    body:          List[str]  = None,
+    tags:          CommonTags = "fish",
+    memo:          CommonMemo = "",
+    mode:          CommonMode = None,
+    f_abbr:        Abbr       = False,
+    f_position:    Pos        = False,
+    f_cursor:      Csr        = False,
     fish_cur_mark: CommonMark = None,
 ):
     """(a) 新しいスニペットを追加"""
@@ -61,15 +61,15 @@ def add(
 @app.command()
 @app.command(name="e", hidden=True)
 def edit(
-    id: int,
-    trigger: Annotated[Optional[str], typer.Option("--trigger", "-T")] = None,
-    body: Annotated[Optional[str],    typer.Option("--body", "-b")] = None,
-    tags: CommonTags = None,
-    memo: CommonMemo = None,
-    mode: CommonMode = None,
-    f_abbr:     Abbr = None,
-    f_position: Pos  = None,
-    f_cursor:   Csr  = None,
+    id:            int,
+    trigger:       Annotated[Optional[str], typer.Option("--trigger", "-T")] = None,
+    body:          Annotated[Optional[str], typer.Option("--body",    "-b")] = None,
+    tags:          CommonTags = None,
+    memo:          CommonMemo = None,
+    mode:          CommonMode = None,
+    f_abbr:        Abbr       = None,
+    f_position:    Pos        = None,
+    f_cursor:      Csr        = None,
     fish_cur_mark: CommonMark = None,
 ):
     """(e) 既存のスニペットを編集"""
