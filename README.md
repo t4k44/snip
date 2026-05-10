@@ -71,7 +71,7 @@ snip tui edit 123
 
 ```bash
 # Rofiを起動してスニペットを選択し、クリップボードにコピー＆ペースト
-snip gui my_tag
+snip gui pop TAG
 ```
 
 ## Development
@@ -105,4 +105,4 @@ uv run ruff check --fix
 
 ## License
 
-[LICENSE](LICENSE)
+[LICENSE](LICENSE.md)
