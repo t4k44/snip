@@ -36,8 +36,8 @@ class AbbrFlag(IntFlag):
 @app.command()
 @app.command(name="a", hidden=True)
 def add(
-    trigger:       str,
-    body:          List[str]  = None,
+    trigger:       str        = typer.Argument(None, help="abbr trigger"),
+    body:          List[str]  = typer.Argument(None, help="abbr body"),
     tags:          CommonTags = "fish",
     memo:          CommonMemo = "",
     mode:          CommonMode = None,
