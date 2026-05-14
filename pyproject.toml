@@ -26,7 +26,7 @@ Issues   = "https://github.com/t4k44/snip/issues"
 snip = "snip.main:main"
 
 [build-system]
-requires = ["uv_build>=0.9.8,<0.10.0"]
+requires = ["uv_build>=0.11.8,<0.12.0"]
 build-backend = "uv_build"
 
 [dependency-groups]
