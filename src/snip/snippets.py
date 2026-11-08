@@ -1,69 +1,97 @@
 import sys
-from enum import IntFlag
-from typing import List, Optional
+from typing import Annotated
 
 import typer
 from pyutils.logger import setup_logger
-from rich import print
-from typing_extensions import Annotated
 
 import snip.constants as C
-from snip.utils import get_db
+from snip.models import AbbrFlag
+from snip.utils import find_row, get_db
 
 logger = setup_logger(__name__)
 app = typer.Typer()
 
 # add/editで共通するオプションを定義
-CommonTags = Annotated[str, typer.Option("--tags", "-t", help="tags split ','")]
-CommonMemo = Annotated[str, typer.Option("--memo", "-m", help="description")]
-CommonMode = Annotated[Optional[str], typer.Option("--mode", "-M",
-                                                   help="nvim mode  t:ON / fmta:TabStop / raw:raw")]
-CommonMark = Annotated[Optional[str], typer.Option("--csr_mark", "-C",
-                                                   help="カーソル位置指定マーク設定")]
+CommonTags = Annotated[str | None, typer.Option("--tags", "-t", help="tags split ','")]
+CommonMemo = Annotated[str | None, typer.Option("--memo", "-m", help="description")]
+CommonMode = Annotated[str | None, typer.Option("--mode", "-M",
+                                                help="nvim mode  t:ON / fmta:TabStop / raw:raw")]
+CommonMark = Annotated[str | None, typer.Option("--csr_mark", "-C",
+                                                help="カーソル位置指定マーク設定")]
 
-# フラグ類
-Abbr = Annotated[bool, typer.Option("--abbr",     "-a", help="fish abbrを有効")]
-Pos  = Annotated[bool, typer.Option("--position", "-p", help="fish abbr Anywhereを有効")]
-Csr  = Annotated[bool, typer.Option("--cursor",   "-c", help="fish abbr カーソル位置指定を有効")]
+# フラグ類 (未指定=None, 明示的にOFFも可能)
+Abbr = Annotated[bool | None, typer.Option("--abbr/--no-abbr",         "-a", help="fish abbrを有効")]
+Pos  = Annotated[bool | None, typer.Option("--position/--no-position", "-p", help="fish abbr Anywhereを有効")]
+Csr  = Annotated[bool | None, typer.Option("--cursor/--no-cursor",     "-c", help="fish abbr カーソル位置指定を有効")]
 
 
-class AbbrFlag(IntFlag):
-    SIMPLE            = 1
-    POSITION_ANYWHERE = 2
-    SET_CURSOR        = 4
+def _split_tags(tags: str | None) -> list[str] | None:
+    if tags is None:
+        return None
+    return [t.strip() for t in tags.split(",") if t.strip()]
+
+
+def _abbr_value(f_abbr: bool | None, f_position: bool | None, f_cursor: bool | None) -> int | None:
+    """フラグ指定からabbr値を組み立てる。全て未指定なら None(=変更しない)"""
+    if f_abbr is None and f_position is None and f_cursor is None:
+        return None
+
+    value = AbbrFlag(0)
+    if f_position: value |= AbbrFlag.POSITION_ANYWHERE
+    if f_cursor:   value |= AbbrFlag.SET_CURSOR
+    if f_abbr or value: value |= AbbrFlag.SIMPLE   # Position/Cursor は abbr 有効が前提
+    return int(value)
+
+
+def _drop_none(params: dict) -> dict:
+    return {k: v for k, v in params.items() if v is not None}
 
 
 @app.command()
 @app.command(name="a", hidden=True)
 def add(
-    trigger:       str        = typer.Argument(None, help="abbr trigger"),
-    body:          List[str]  = typer.Argument(None, help="abbr body"),
+    trigger:       Annotated[str | None,       typer.Argument(help="abbr trigger")] = None,
+    body:          Annotated[list[str] | None, typer.Argument(help="abbr body")] = None,
     tags:          CommonTags = "fish",
     memo:          CommonMemo = "",
     mode:          CommonMode = None,
-    f_abbr:        Abbr       = False,
-    f_position:    Pos        = False,
-    f_cursor:      Csr        = False,
+    f_abbr:        Abbr       = None,
+    f_position:    Pos        = None,
+    f_cursor:      Csr        = None,
     fish_cur_mark: CommonMark = None,
 ):
     """(a) 新しいスニペットを追加"""
     logger.debug(f"trigger: {trigger}")
 
-    with get_db() as db:
-        params = __build_params(locals())
-        logger.debug(f"calling SNIP.insert | params: {params}")
+    body_text = " ".join(body) if body else None
+    if body_text is None and not sys.stdin.isatty():
+        logger.debug("reading body from stdin...")
+        body_text = sys.stdin.read().strip()
 
-        db[C.TABLE].insert(params, pk="id", columns={"abbr": int})
-        ret = db[C.TABLE].get(db.conn.execute("SELECT last_insert_rowid()").fetchone()[0])
-        print(f"DONE {ret['id']} : {ret['trigger']}")
+    params = _drop_none({
+        "trigger":       trigger,
+        "body":          body_text,
+        "tags":          _split_tags(tags),
+        "memo":          memo,
+        "mode":          mode,
+        "abbr":          _abbr_value(f_abbr, f_position, f_cursor),
+        "fish_cur_mark": fish_cur_mark,
+    })
+    logger.debug(f"calling SNIP.insert | params: {params}")
+
+    with get_db() as db:
+        table = db[C.TABLE]
+        table.insert(params)
+        ret = table.get(table.last_pk)
+        typer.echo(f"DONE {ret['id']} : {ret['trigger']}")
 
 
 @app.command()
 @app.command(name="e", hidden=True)
 def edit(
     id:            int,
-    trigger:       Annotated[Optional[str], typer.Option("--trigger", "-T")] = None,
-    body:          Annotated[Optional[str], typer.Option("--body",    "-b")] = None,
+    trigger:       Annotated[str | None, typer.Option("--trigger", "-T")] = None,
+    body:          Annotated[str | None, typer.Option("--body",    "-b", help="'-' で標準入力から読む")] = None,
     tags:          CommonTags = None,
     memo:          CommonMemo = None,
     mode:          CommonMode = None,
@@ -75,15 +103,30 @@ def edit(
     """(e) 既存のスニペットを編集"""
     logger.debug(f"trigger: {trigger}")
 
-    with get_db() as db:
-        params = __build_params(locals())
-        logger.debug(f"calling SNIP.edit | params: {params}")
+    if body == "-":
+        body = sys.stdin.read().strip()
 
-        params["id"] = id
-        db[C.TABLE].upsert(params, pk="id")
+    params = _drop_none({
+        "trigger":       trigger,
+        "body":          body,
+        "tags":          _split_tags(tags),
+        "memo":          memo,
+        "mode":          mode,
+        "abbr":          _abbr_value(f_abbr, f_position, f_cursor),
+        "fish_cur_mark": fish_cur_mark,
+    })
+    logger.debug(f"calling SNIP.edit | params: {params}")
+
+    with get_db() as db:
+        if find_row(db, id) is None:
+            typer.echo(f"[ERROR] id={id} は存在しません", err=True)
+            raise typer.Exit(code=1)
+
+        if params:
+            db[C.TABLE].update(id, params)
         ret = db[C.TABLE].get(id)
         logger.debug(f"calling SNIP.edit | record: {ret}")
-        print(f"UPDATE {ret['id']} : {ret['trigger']}")
+        typer.echo(f"UPDATE {ret['id']} : {ret['trigger']}")
 
 
 @app.command()
@@ -91,37 +134,11 @@ def edit(
 def delete(id: int):
     """(d) スニペットを削除します"""
     with get_db() as db:
-        ret = db[C.TABLE].get(id)
+        ret = find_row(db, id)
+        if ret is None:
+            typer.echo(f"[ERROR] id={id} は存在しません", err=True)
+            raise typer.Exit(code=1)
+
         db[C.TABLE].delete(id)
-
-        print("DELETED:")
-        print(ret)
-
-
-def __build_params(local_vars: dict):
-    """locals()からparams組み立て"""
-    params = {
-        k: local_vars[k]
-        for k in C.TARGET_FIELD
-        if k in local_vars and local_vars[k]    # 空文字、None除外
-    }
-
-    # bodyの処理
-    if not sys.stdin.isatty():
-        logger.debug("reading from stdin...")
-        params["body"] = sys.stdin.read().strip()
-    elif local_vars.get("body"):
-        params["body"] = " ".join(local_vars.get("body", [])) or ""
-
-    if tags := local_vars.get("tags"):
-        params["tags"] = [t for t in tags.split(",") if t]
-
-    flags = [local_vars.get(k) for k in ["f_abbr", "f_position", "f_cursor"]]
-    if any(f is not None for f in flags):
-        flag = 0
-        if local_vars.get("f_position"):          flag += 2
-        if local_vars.get("f_cursor"):            flag += 4
-        if local_vars.get("f_abbr") or flag != 0: flag += 1
-        params["abbr"] = flag
-
-    return params
+        typer.echo("DELETED:")
+        typer.echo(ret)

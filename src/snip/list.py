@@ -1,18 +1,18 @@
 import re
 import shlex
-import sys
 
 import typer
 from pyutils.logger import setup_logger
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table
 
 import snip.constants as C
-from snip.snippets import AbbrFlag
+from snip.models import PLACEHOLDER_RE, AbbrFlag
 from snip.utils import get_db
 
 app = typer.Typer(help="(l) スニペットの一覧表示、各種アプリケーション用ファイル出力")
-logging = setup_logger(__name__)
+logger = setup_logger(__name__)
 
 
 @app.command()
@@ -20,14 +20,13 @@ logging = setup_logger(__name__)
 def cheat_sheet(tag: str):
     """登録済みabbr表示"""
     with get_db() as db:
-        table = Table(title=tag)
+        table = Table(title=escape(tag))
         table.add_column("abbr")
         table.add_column("cmd")
         table.add_column("memo")
 
-        query = "EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = ?)"
-        for row in db[C.TABLE].rows_where(query, [tag], order_by="trigger", select="trigger, body, memo"):
-            table.add_row(row["trigger"], row["body"], row["memo"])
+        for row in db[C.TABLE].rows_where(C.TAG_FILTER, [tag], order_by="trigger", select="trigger, body, memo"):
+            table.add_row(escape(row["trigger"] or ""), escape(row["body"] or ""), escape(row["memo"] or ""))
 
     Console().print(table)
 
@@ -37,93 +36,81 @@ def fish():
     """fish用abbr出力"""
     cmds = []
     with get_db() as db:
-        for row in db["snippets"].rows_where("abbr & 1 = 1", select="trigger, body, abbr, fish_cur_mark"):
+        for row in db[C.TABLE].rows_where("abbr & 1 = 1", select="trigger, body, abbr, fish_cur_mark"):
             flags = AbbrFlag(row["abbr"])
-            if AbbrFlag.SIMPLE in flags:
-                parts = ["abbr", "--add"]
+            parts = ["abbr", "--add"]
 
-                if AbbrFlag.POSITION_ANYWHERE in flags:
-                    parts += ["--position", "anywhere"]
+            if AbbrFlag.POSITION_ANYWHERE in flags:
+                parts += ["--position", "anywhere"]
 
-                if AbbrFlag.SET_CURSOR in flags:
-                    if row["fish_cur_mark"]:
-                        parts += [f"--set-cursor={row['fish_cur_mark']}"]
-                    else:
-                        parts += ["--set-cursor"]
+            if AbbrFlag.SET_CURSOR in flags:
+                if row["fish_cur_mark"]:
+                    parts += [f"--set-cursor={row['fish_cur_mark']}"]
+                else:
+                    parts += ["--set-cursor"]
 
-                parts += ["--", row["trigger"], re.sub("<[0-9]>", "", row["body"])]
-                cmds.append(" ".join(shlex.quote(p) for p in parts)) # 各引数をシェル安全にクォートして連結
+            parts += ["--", row["trigger"], PLACEHOLDER_RE.sub("", row["body"] or "")]
+            cmds.append(" ".join(shlex.quote(p) for p in parts))  # 各引数をシェル安全にクォートして連結
 
-        if not cmds:
-            print("登録対象なし")
-            return 0
+    if not cmds:
+        print("登録対象なし")
+        return
 
-        fish_cmd = "\n".join(cmds)
-        try:
-            file = open(C.FISH_ABBR, "w", encoding="UTF-8")
-            file.writelines(fish_cmd)
-            file.close()
-        except Exception as e:
-            print(f"[ERROR] 一括登録失敗: {e}", file=sys.stderr)
-            return 1
-
-    return 0
+    try:
+        C.FISH_ABBR.parent.mkdir(parents=True, exist_ok=True)
+        C.FISH_ABBR.write_text("\n".join(cmds) + "\n", encoding="UTF-8")
+    except OSError as e:
+        typer.echo(f"[ERROR] 一括登録失敗: {e}", err=True)
+        raise typer.Exit(code=1) from e
 
 
 @app.command()
-def skk(db):
+def skk():
     """SKKの辞書形式でスニペットを自動生成"""
     abbr = []
     with get_db() as db:
-        rows = db[C.TABLE].rows_where(
-            "EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = ?)", ['skk'])
-        for row in rows:
-            body  = row["body"].replace("%", "")
+        for row in db[C.TABLE].rows_where(C.TAG_FILTER, ["skk"]):
+            body = (row["body"] or "").replace("%", "")
             abbr.append(f"{row['trigger']} /{body}/\n")
 
-    file = open(C.SKK_ABBR, "w", encoding="UTF-8")
-    file.write(";; okuri-ari entries.\n")
-    file.write(";; okuri-nasi entries.\n")
-    file.writelines(abbr)
-    file.close()
+    C.SKK_ABBR.parent.mkdir(parents=True, exist_ok=True)
+    with open(C.SKK_ABBR, "w", encoding="UTF-8") as f:
+        f.write(";; okuri-ari entries.\n")
+        f.write(";; okuri-nasi entries.\n")
+        f.writelines(abbr)
 
 
-def init_nvim_tag(db):
-    tags = [
-        {"name":"all"},{"name":"gitcommit"},{"name":"python"},
-        {"name":"sh"},{"name":"sql"},{"name":"text"}
-    ]
-    db[C.TAG_TABLE].insert_all(tags, pk="id", columns={"abbr": int})
+def _lua_str(s: str) -> str:
+    """Luaの文字列リテラルに変換"""
+    return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
 @app.command()
 def nvim():
     """NeovimのLuaSnip形式でスニペットを自動生成"""
+    C.NVIM_SNIP.mkdir(parents=True, exist_ok=True)
     with get_db() as db:
-        for t in db[C.TAG_TABLE].rows:
-            tag = t["name"]
-            rows = db[C.TABLE].rows_where(
-                "EXISTS (SELECT 1 FROM json_each(snippets.tags) WHERE value = ?)"
-                "AND mode IS NOT NULL", [tag])
+        for tag in (t["name"] for t in db[C.TAG_TABLE].rows):
+            rows = db[C.TABLE].rows_where(f"{C.TAG_FILTER} AND mode IS NOT NULL", [tag])
 
             snip = []
             for row in rows:
+                trig = _lua_str(row["trigger"] or "")
+                body = row["body"] or ""
                 match row["mode"]:
                     case "fmta":
-                        body  = row["body"].replace("%", "")
-                        maxn  = [int(m) for m in re.findall(r"<(\d+)>", body)]
-                        nodes = ", ".join([f"i({n})" for n in maxn])
-                        snip.append(f"  s(\"{row['trigger']}\", fmta([[{body}]], {{ {nodes} }})),\n")
+                        body  = body.replace("%", "")
+                        maxn  = max((int(m) for m in re.findall(r"<(\d+)>", body)), default=0)
+                        nodes = ", ".join(f"i({n})" for n in range(1, maxn + 1))
+                        snip.append(f"  s({trig}, fmta([==[{body}]==], {{ {nodes} }})),\n")
                     case "raw":
-                        snip.append(f"  s(\"{row['trigger']}\", {{{row['body']}}}),\n")
+                        snip.append(f"  s({trig}, {{{body}}}),\n")
                     case "t":
-                        body = row['body'].replace("\"", "\\\"").replace("\n", "\",\"")
-                        snip.append(f"  s(\"{row['trigger']}\", t(\"{body}\")),\n")
+                        lines = ", ".join(_lua_str(line) for line in body.split("\n"))
+                        snip.append(f"  s({trig}, t({{{lines}}})),\n")
 
-            file_name = C.NVIM_SNIP / f"{tag}.lua"
-            file = open(file_name, "w", encoding="UTF-8")
-            file.write("local fmta = require(\"luasnip.extras.fmt\").fmta\n")
-            file.write("return {\n")
-            file.writelines(snip)
-            file.write("}")
-            file.close()
+            with open(C.NVIM_SNIP / f"{tag}.lua", "w", encoding="UTF-8") as f:
+                f.write("local fmta = require(\"luasnip.extras.fmt\").fmta\n")
+                f.write("return {\n")
+                f.writelines(snip)
+                f.write("}")

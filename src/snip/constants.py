@@ -43,6 +43,9 @@ CONFIG_DIR     = Path(os.getenv("XDG_CONFIG_HOME", Path.home() / ".config"))
 TABLE          = CONFIG["TABLE"]
 TAG_TABLE      = CONFIG["TAG_TABLE"]
 
+# タグ絞り込み条件 (プレースホルダ ? にタグ名を渡す)
+TAG_FILTER     = f"EXISTS (SELECT 1 FROM json_each({TABLE}.tags) WHERE value = ?)"
+
 CLIP_COPY_CMD  = CONFIG["COPY_CMD"]
 CLIP_PASTE_CMD = CONFIG["PASTE_CMD"]
 EDITOR         = CONFIG["EDITOR"]

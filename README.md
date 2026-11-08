@@ -33,6 +33,9 @@ echo "multiline body" | snip add trigger_name -t tag1
 # スニペットの編集 (ID指定)
 snip edit 123 --body "new body" --tags new_tag
 
+# 標準入力から body を更新
+echo "new body" | snip edit 123 --body -
+
 # スニペットの削除
 snip delete 123
 ```
@@ -79,6 +82,8 @@ snip gui pop TAG
 ### ファイル構成
 
 - `src/snip/main.py`: CLIのエントリポイント（Typer）。
+- `src/snip/models.py`: `AbbrFlag` などの共通定数。
+- `src/snip/editor.py`: `snip tui edit` 用の Textual エディタ。
 - `src/snip/snippets.py`: `add`, `edit`, `delete` コマンドの実装。
 - `src/snip/list.py`: `list cs`, `list fish` コマンドの実装。
 - `src/snip/tui.py`: `fzf`連携用のサブコマンド群。

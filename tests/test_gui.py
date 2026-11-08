@@ -39,3 +39,15 @@ def test_gui_pop(init_db, mocker):
     calls = [call.args[0] for call in mock_run.call_args_list]
     assert any(C.CLIP_COPY_CMD[0] in cmd for cmd in calls)
     assert any(C.CLIP_PASTE_CMD[0] in cmd for cmd in calls)
+
+def test_gui_pop_cancelled(init_db, mocker):
+    mock_rofi = mocker.Mock(returncode=1, stdout="")
+    mocker.patch("subprocess.run", return_value=mock_rofi)
+    result = runner.invoke(app, ["gui", "pop", "gui"])
+    assert result.exit_code == 0
+
+def test_gui_pop_garbage_output(init_db, mocker):
+    mock_rofi = mocker.Mock(returncode=0, stdout="")
+    mocker.patch("subprocess.run", return_value=mock_rofi)
+    result = runner.invoke(app, ["gui", "pop", "gui"])
+    assert result.exit_code == 0

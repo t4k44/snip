@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DB="$HOME/.config/mine/snippets.db"
+DB="$HOME/.config/snip/snippets.db"
 TAB="snippets"
 
 # 1. CopyQ から JSON 形式で全アイテムを取得
@@ -25,14 +25,14 @@ for (var i = 0; i < n; ++i) {
 print("]\n");')
 
 # 2. SQLite に登録
-echo "$ITEMS_JSON" | tee /dev/tty | sqlite-utils insert $DB $TAB -
+printf '%s\n' "$ITEMS_JSON" | tee /dev/tty | sqlite-utils insert "$DB" "$TAB" -
 
 # ブランクの埋め
-sqlite3 $DB <<EOF
+sqlite3 "$DB" <<SQL
   UPDATE $TAB
-  SET trigger = 'memo', memo = '', tags = '["copyq"]', mode = 0
+  SET trigger = 'memo', memo = '', tags = '["copyq"]'
   WHERE trigger = '';
-EOF
+SQL
 
 # 3. タブを初期化
 copyq removetab snippets

@@ -4,6 +4,7 @@ import pytest
 import sqlite_utils
 
 from snip import constants as C
+from snip.utils import ensure_schema
 
 
 @pytest.fixture
@@ -26,6 +27,7 @@ def mock_get_db(mocker, db):
     mocker.patch("snip.list.get_db", side_effect=_mocked_get_db)
     mocker.patch("snip.tui.get_db", side_effect=_mocked_get_db)
     mocker.patch("snip.gui.get_db", side_effect=_mocked_get_db)
+    mocker.patch("snip.editor.get_db", side_effect=_mocked_get_db)
     return _mocked_get_db
 
 @pytest.fixture(autouse=True)
@@ -39,17 +41,19 @@ def mock_stdin(mocker):
 
 @pytest.fixture
 def init_db(db):
-    """Initialize the database table with all columns."""
-    columns = {field: str for field in C.TARGET_FIELD}
-    columns["abbr"] = int
-    columns["rate"] = int
-    # tags will be stored as JSON (TEXT in sqlite)
-    db[C.TABLE].create(columns, pk="id")
+    """Initialize the database with the real (production) schema."""
+    ensure_schema(db)
     return db
 
 @pytest.fixture(autouse=True)
 def mock_paths(monkeypatch, tmp_path):
     """Mock file paths to use a temporary directory."""
-    fish_abbr = tmp_path / "abbr.fish"
-    monkeypatch.setattr(C, "FISH_ABBR", fish_abbr)
-    return {"fish_abbr": fish_abbr}
+    paths = {
+        "fish_abbr": tmp_path / "fish" / "abbr.fish",
+        "nvim_snip": tmp_path / "nvim" / "luasnippets",
+        "skk_abbr":  tmp_path / "skk" / "abbr.dict",
+    }
+    monkeypatch.setattr(C, "FISH_ABBR", paths["fish_abbr"])
+    monkeypatch.setattr(C, "NVIM_SNIP", paths["nvim_snip"])
+    monkeypatch.setattr(C, "SKK_ABBR",  paths["skk_abbr"])
+    return paths

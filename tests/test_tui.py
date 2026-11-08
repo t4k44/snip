@@ -23,6 +23,10 @@ def test_tui_raw(init_db):
     assert "t1" in result.stdout
     assert "b1" in result.stdout
 
+def test_tui_list_tag_with_quote(init_db):
+    result = runner.invoke(app, ["tui", "list", "it's"])
+    assert result.exit_code == 0
+
 def test_tui_preview(init_db):
     db = init_db
     db[C.TABLE].insert({
@@ -42,6 +46,11 @@ def test_tui_preview(init_db):
     assert "body_content" in result.stdout
     assert "---" in result.stdout
     assert "memo_content" in result.stdout
+
+def test_tui_preview_missing(init_db):
+    result = runner.invoke(app, ["tui", "preview", "999"])
+    assert result.exit_code == 0
+    assert result.stdout.strip() == ""
 
 def test_tui_get(init_db):
     db = init_db
@@ -64,3 +73,7 @@ def test_tui_get(init_db):
     # Check rate incremented
     row = db[C.TABLE].get(row_id)
     assert row["rate"] == 6
+
+def test_tui_get_missing(init_db):
+    result = runner.invoke(app, ["tui", "get", "999"])
+    assert result.exit_code == 1
